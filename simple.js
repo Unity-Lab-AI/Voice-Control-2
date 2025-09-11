@@ -288,7 +288,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Send on Enter; newline with Shift+Enter
         simpleInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            const isEnter = e.key === 'Enter' || e.keyCode === 13;
+            if (isEnter && !e.shiftKey) {
                 e.preventDefault();
                 handleSimpleSend();
             }
