@@ -1,0 +1,12 @@
+{
+  "name": "voice-control-2",
+  "version": "1.0.0",
+  "description": "Voice controlled chat interface",
+  "scripts": {
+    "start": "http-server -c-1 .",
+    "test": "echo \"No tests specified\""
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
