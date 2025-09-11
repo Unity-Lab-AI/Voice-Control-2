@@ -35,7 +35,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let autoPromptEnabled = true;
     let isFetchingPrompt = false;
     let lastPromptUpdate = 0;
-    const MAX_HISTORY = 12;
+    const MAX_HISTORY = 10;
+    const EMPTY_THUMBNAIL = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
     const PROMPT_UPDATE_INTERVAL = 20000;
 
     let settings = {
@@ -320,40 +321,34 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        thumbnailContainer.innerHTML = '';
-        imageHistory.forEach((imageUrl, index) => {
-            const thumb = document.createElement('img');
-            thumb.src = imageUrl;
-            thumb.classList.add('thumbnail');
-            thumb.title = promptHistory[index] || 'No prompt available';
-            thumb.alt = "Thumbnail Image";
-            thumb.style.opacity = '1';
-            thumb.onerror = () => {
-                console.log(`Thumbnail ${index + 1} failed to load, using fallback:`, imageUrl);
-                thumb.src = "https://via.placeholder.com/160x90?text=Image+Failed";
-                thumb.style.opacity = '1';
-            };
-            thumb.onload = () => {
-                console.log(`Thumbnail ${index + 1} loaded successfully:`, imageUrl);
-            };
-            thumb.onclick = () => showHistoricalImage(index);
-            const currentImgSrc = document.getElementById(`screensaver-${currentImage}`).src;
-            if (imageUrl === currentImgSrc) {
-                thumb.classList.add('selected');
-                console.log("Highlighted thumbnail as selected:", imageUrl);
+        const slots = thumbnailContainer.querySelectorAll('img.thumbnail');
+        slots.forEach((thumb, index) => {
+            const imageUrl = imageHistory[index];
+            thumb.onclick = null;
+            thumb.classList.remove('selected');
+            thumb.classList.remove('placeholder');
+
+            if (imageUrl) {
+                thumb.src = imageUrl;
+                thumb.title = promptHistory[index] || 'No prompt available';
+                thumb.onclick = () => showHistoricalImage(index);
+                const currentImgSrc = document.getElementById(`screensaver-${currentImage}`).src;
+                if (imageUrl === currentImgSrc) {
+                    thumb.classList.add('selected');
+                }
+            } else {
+                thumb.src = EMPTY_THUMBNAIL;
+                thumb.title = '';
+                thumb.classList.add('placeholder');
             }
-            thumbnailContainer.appendChild(thumb);
-            console.log(`Added thumbnail ${index + 1}/${imageHistory.length} to DOM:`, thumb.src);
         });
 
-        // keep the view scrolled to the latest thumbnail
         thumbnailContainer.scrollTo({ left: thumbnailContainer.scrollWidth, behavior: 'smooth' });
-        console.log("Updated thumbnail gallery with", imageHistory.length, "images. DOM count:", thumbnailContainer.children.length);
-
         const offsetWidth = thumbnailContainer.offsetWidth;
         thumbnailContainer.style.display = 'none';
         thumbnailContainer.offsetHeight;
         thumbnailContainer.style.display = 'flex';
+        console.log("Updated thumbnail gallery with", imageHistory.length, "images. DOM count:", thumbnailContainer.children.length);
         console.log("Forced DOM reflow to ensure rendering. Container offsetWidth:", offsetWidth);
     }
 

@@ -791,27 +791,18 @@ body {
 }
 
 .screensaver-thumbnails {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap;
-  gap: 12px;
+  gap: 10px;
   overflow-x: auto;
   width: 100%;
-  height: 120px;
+  max-width: 1290px;
   padding: 10px;
   background: rgba(0, 0, 0, 0.7);
-  border-radius: 0;
-  z-index: 2;
+  border-radius: 12px;
   transition: opacity 0.3s ease;
   scrollbar-width: thin;
-  scrollbar-color: #707070 #333333;
   white-space: nowrap;
-  direction: ltr;
-  scroll-behavior: smooth;
 }
 
 .screensaver-thumbnails::-webkit-scrollbar {
@@ -829,8 +820,8 @@ body {
 }
 
 .screensaver-thumbnails img.thumbnail {
-  width: 160px;
-  height: 90px;
+  width: 120px;
+  height: 80px;
   object-fit: cover;
   cursor: pointer;
   border: 3px solid transparent;
@@ -840,6 +831,12 @@ body {
   display: inline-block;
   opacity: 1;
   position: static;
+}
+
+.screensaver-thumbnails img.thumbnail.placeholder {
+  opacity: 0.3;
+  border: 3px dashed #555;
+  pointer-events: none;
 }
 
 .screensaver-thumbnails img.thumbnail:hover {
