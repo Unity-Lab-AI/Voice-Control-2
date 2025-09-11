@@ -30,6 +30,16 @@ async function pollinationsFetch(url, options = {}, { timeoutMs = 45000 } = {}) 
 }
 window.pollinationsFetch = pollinationsFetch;
 
+// Load global AI instructions from external text file
+window.aiInstructions = "";
+window.aiInstructionPromise = fetch("ai-instruct.txt")
+    .then(res => res.text())
+    .then(text => { window.aiInstructions = text; })
+    .catch(err => {
+        console.error("Failed to load AI instructions", err);
+        window.aiInstructions = "";
+    });
+
 document.addEventListener("DOMContentLoaded", () => {
 
     const chatBox = document.getElementById("chat-box");
@@ -486,7 +496,8 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBox.appendChild(loadingDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        const messages = [{ role: "user", content: window.memoryInstructions }];
+        await window.aiInstructionPromise;
+        const messages = [{ role: "user", content: window.aiInstructions }];
         const memories = Memory.getMemories();
         if (memories?.length) {
             messages.push({ role: "user", content: `Relevant memory:\n${memories.join("\n")}\nUse it in your response.` });
