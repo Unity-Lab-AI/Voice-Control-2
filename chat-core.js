@@ -506,13 +506,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const model = (document.getElementById("model-select")?.value) || currentSession.model || "unity";
-        const apiUrl = `https://text.pollinations.ai/openai?model=${encodeURIComponent(model)}`;
+        const apiUrl = `https://text.pollinations.ai/openai?&model=${encodeURIComponent(model)}`;
 
         try {
             const res = await window.pollinationsFetch(apiUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Accept": "application/json" },
-                body: JSON.stringify({ messages, model })
+                body: JSON.stringify({ messages })
             }, { timeoutMs: 45000 });
             const data = await res.json();
 

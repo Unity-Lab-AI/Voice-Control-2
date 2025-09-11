@@ -141,15 +141,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function fetchDynamicPrompt() {
         const metaPrompt = "Generate unique, new, fucked up and explicit wild image prompts as text only of outlandish and psychologically thrilling images. ie demented, evil, psychotic art, under 125 characters.";
-        const token = encodeURIComponent(window.POLLINATIONS_TOKEN || "");
-        const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(metaPrompt)}?model=unity${token ? `&token=${token}` : ""}`;
+        const apiUrl = `https://text.pollinations.ai/openai?&model=unity`;
         try {
             const response = await window.pollinationsFetch(apiUrl, {
-                method: "GET",
-                headers: { Accept: "text/plain" },
+                method: "POST",
+                headers: { "Content-Type": "application/json", Accept: "application/json" },
                 cache: "no-store",
+                body: JSON.stringify({
+                    messages: [{ role: "user", content: metaPrompt }]
+                })
             });
-            const generatedPrompt = await response.text();
+            const data = await response.json();
+            const generatedPrompt = data?.choices?.[0]?.message?.content;
             if (!generatedPrompt) throw new Error("No prompt returned from API");
             return generatedPrompt;
         } catch (err) {
@@ -157,6 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
             throw err;
         }
     }
+  
     async function updatePrompt() {
         if (!screensaverActive || paused || !autoPromptEnabled || isFetchingPrompt) {
             return false;
