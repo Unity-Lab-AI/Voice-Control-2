@@ -341,6 +341,7 @@ body {
   margin-top: 8px;
   flex-wrap: wrap;
   z-index: 10;
+  position: relative;
 }
 
 .image-button {
@@ -838,6 +839,7 @@ body {
   flex-shrink: 0;
   display: inline-block;
   opacity: 1;
+  position: static;
 }
 
 .screensaver-thumbnails img.thumbnail:hover {
