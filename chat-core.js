@@ -30,6 +30,16 @@ async function pollinationsFetch(url, options = {}, { timeoutMs = 45000 } = {}) 
 }
 window.pollinationsFetch = pollinationsFetch;
 
+// Load global AI instructions from external text file
+window.aiInstructions = "";
+window.aiInstructionPromise = fetch("ai-instruct.txt")
+    .then(res => res.text())
+    .then(text => { window.aiInstructions = text; })
+    .catch(err => {
+        console.error("Failed to load AI instructions", err);
+        window.aiInstructions = "";
+    });
+
 document.addEventListener("DOMContentLoaded", () => {
 
     const chatBox = document.getElementById("chat-box");
