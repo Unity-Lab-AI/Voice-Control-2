@@ -129,13 +129,13 @@
           <div class="chat-controls">
             <div>
               <button id="voice-toggle" class="control-btn" title="Toggle automatic voice responses">
-                <i class="fas fa-volume-mute"></i> Voice Off
+                <i class="fas fa-volume-mute"></i> AI Voice Off
               </button>
               <button id="open-voice-settings-modal" class="control-btn" title="Open voice settings">
                 <i class="fas fa-sliders-h"></i> Voice Settings
               </button>
-              <button id="open-voice-chat-modal" class="control-btn" title="Start voice chat with image slideshow">
-                <i class="fas fa-headset"></i> Voice Chat
+              <button id="voice-chat-toggle" class="control-btn" title="Toggle voice input">
+                <i class="fas fa-headset"></i> Voice Chat Off
               </button>
               <button id="shut-up-btn" class="control-btn" title="Instantly stop all voice output" onclick="window._chatInternals.shutUpTTS()">
                 <i class="fas fa-volume-mute"></i> Shut Up
@@ -381,18 +381,6 @@
         <div class="modal-footer">
           <button id="voice-settings-save" class="btn btn-primary">Save</button>
           <button id="voice-settings-cancel" class="btn btn-secondary">Cancel</button>
-        </div>
-      </div>
-    </div>
-    <div id="voice-chat-modal" class="modal-backdrop hidden">
-      <div class="modal-container">
-        <div class="modal-header">
-          <h3 class="modal-title">Voice Chat</h3>
-          <button id="voice-chat-modal-close" class="close-btn" title="Close Voice Chat Window">×</button>
-        </div>
-        <div class="modal-body">
-          <img id="voice-chat-image" src="" alt="Conversation Image" style="max-width: 100%; border-radius: 8px;">
-          <p>Listening to your voice... Speak naturally, and I'll respond after pauses.</p>
         </div>
       </div>
     </div>

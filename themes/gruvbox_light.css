@@ -112,15 +112,9 @@ body {
 
 /* Send and voice buttons */
 #send-button,
-#voice-input-btn {
-  background-color: #F2E5BC;
-  color: #3C3836;
-}
+
 #send-button:hover,
-#voice-input-btn:hover {
-  background-color: #EBDAB4;
-  color: #3C3836;
-}
+
 #send-button:disabled {
   background-color: #D5C4A1;
   color: #3C3836;
@@ -142,7 +136,7 @@ body {
 }
 
 /* Voice chat controls */
-#voice-toggle.active {
+#voice-toggle.active, #voice-chat-toggle.active {
   background-color: #EBDAB4;
   color: #3C3836;
 }
@@ -299,34 +293,7 @@ body {
 }
 
 /* Voice chat modal */
-.voice-chat-modal {
-  background-color: #F2E5BC;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
-}
-.voice-status {
-  background-color: #F2E5BC;
-  border: 1px solid #EBDAB4;
-  color: #EBDBB2;
-}
-.voice-btn {
-  background-color: #F2E5BC;
-  color: #3C3836;
-}
-.voice-btn:hover {
-  background-color: #EBDAB4;
-}
-.voice-btn:disabled {
-  background-color: #D5C4A1;
-  color: #3C3836;
-}
-.voice-btn.listening {
-  background-color: #f44336;
-}
-.transcript {
-  background-color: #F2E5BC;
-  border: 1px solid #EBDAB4;
-  color: #3C3836;
-}
+
 
 /* Personalization modal */
 .personalization-form .form-group {

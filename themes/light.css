@@ -128,14 +128,9 @@ body {
 }
 
 /* Send and voice buttons */
-#send-button, #voice-input-btn {
-  background-color: #2196f3;
-  color: white;
-}
+#send-button, 
 
-#send-button:hover, #voice-input-btn:hover {
-  background-color: #1976d2;
-}
+#send-button:hover, 
 
 #send-button:disabled {
   background-color: #bdbdbd;
@@ -160,7 +155,7 @@ body {
 }
 
 /* Voice chat controls */
-#voice-toggle.active {
+#voice-toggle.active, #voice-chat-toggle.active {
   background-color: #4caf50;
   color: white;
 }
@@ -349,40 +344,7 @@ body {
 }
 
 /* Voice chat modal */
-.voice-chat-modal {
-  background-color: #ffffff;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-}
 
-.voice-status {
-  background-color: #f5f5f5;
-  border: 1px solid #e0e0e0;
-  color: #555555;
-}
-
-.voice-btn {
-  background-color: #2196f3;
-  color: white;
-}
-
-.voice-btn:hover {
-  background-color: #1976d2;
-}
-
-.voice-btn:disabled {
-  background-color: #bdbdbd;
-  color: #ffffff;
-}
-
-.voice-btn.listening {
-  background-color: #f44336;
-}
-
-.transcript {
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
-  color: #333333;
-}
 
 /* Personalization modal */
 .personalization-form .form-group {
