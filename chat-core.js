@@ -527,7 +527,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const model = (document.getElementById("model-select")?.value) || currentSession.model || "unity";
         const seed = randomSeed();
         const token = encodeURIComponent(getPollinationsToken());
-        const apiUrl = `https://text.pollinations.ai/openai?model=${encodeURIComponent(model)}&seed=${seed}&token=${token}`;
+        const apiUrl = `https://text.pollinations.ai/openai?model=${encodeURIComponent(model)}&seed=${seed}&token=${token}&safe=false`;
 
         try {
             const res = await window.pollinationsFetch(apiUrl, {
