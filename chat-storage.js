@@ -1,6 +1,31 @@
 document.addEventListener("DOMContentLoaded", () => {
     const { chatBox, chatInput, clearChatBtn, voiceToggleBtn, modelSelect, synth, autoSpeakEnabled, speakMessage, stopSpeaking, showToast, toggleSpeechRecognition, initSpeechRecognition, handleVoiceCommand, speakSentences } = window._chatInternals;
     const imagePatterns = window.imagePatterns;
+
+    function openImageModal(imageUrl) {
+        window.open(imageUrl, "_blank");
+    }
+
+    function addImageToGallery(imageUrl) {
+        const gallery = document.getElementById('past-image-gallery');
+        if (!gallery) return;
+        if ([...gallery.querySelectorAll('img.thumbnail')].some(img => img.src === imageUrl)) return;
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.className = 'thumbnail';
+        img.addEventListener('click', () => {
+            openImageModal(imageUrl);
+        });
+        gallery.appendChild(img);
+        if (window.Memory && typeof window.Memory.saveImage === 'function') {
+            window.Memory.saveImage(imageUrl);
+        }
+    }
+
+    if (window.Memory && typeof window.Memory.loadPastImages === 'function') {
+        window.Memory.loadPastImages(addImageToGallery);
+    }
+
     function generateSessionTitle(messages) {
         let title = "";
         for (let i = 0; i < messages.length; i++) {
@@ -212,6 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
             loadingDiv.style.alignItems = "center";
         };
         imageContainer.appendChild(img);
+        addImageToGallery(url);
         const imgButtonContainer = document.createElement("div");
         imgButtonContainer.className = "image-button-container";
         imgButtonContainer.dataset.imageId = imageId;
