@@ -139,33 +139,29 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    async function fetchDynamicPromptWithRetry(maxRetries = 6, delayMs = 4000) {
+    async function fetchDynamicPrompt() {
         const metaPrompt = "Generate an image prompt of something new and wild. Respond with text only.";
         const messages = [
             { role: "system", content: "Generate unique, wild image prompts as text only, under 100 characters." },
             { role: "user", content: metaPrompt }
         ];
-        const seed = generateSeed();
         const body = {
             messages,
-            model: "unity",
-            nonce: seed
+            model: "unity"
         };
-        const apiUrl = `https://text.pollinations.ai/openai?model=unity&seed=${seed}`;
-        console.log("Sending API request for new prompt:", JSON.stringify(body));
+        const apiUrl = `https://text.pollinations.ai/openai?model=unity`;
         try {
             const response = await window.pollinationsFetch(apiUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Accept: "application/json" },
                 body: JSON.stringify(body),
                 cache: "no-store",
-            }, maxRetries, delayMs);
+            });
 
             const data = await response.json();
             let generatedPrompt = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || data.response;
             if (!generatedPrompt) throw new Error("No prompt returned from API");
             if (generatedPrompt.length > 100) generatedPrompt = generatedPrompt.substring(0, 100);
-            console.log("Received new prompt from API:", generatedPrompt);
             return generatedPrompt;
         } catch (err) {
             console.error("Failed to fetch dynamic prompt:", err);
@@ -178,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         isFetchingPrompt = true;
         try {
-            const newPrompt = await fetchDynamicPromptWithRetry();
+            const newPrompt = await fetchDynamicPrompt();
             promptInput.value = newPrompt;
             settings.prompt = newPrompt;
             saveScreensaverSettings();
