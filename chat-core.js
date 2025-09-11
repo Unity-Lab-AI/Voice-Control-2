@@ -28,15 +28,26 @@ window.aiInstructionPromise = fetch("ai-instruct.txt")
 // Utility: allow Enter to send messages and Shift+Enter for new lines
 window.setupEnterToSend = function(textarea, sendCallback) {
     if (!textarea || typeof sendCallback !== "function") return;
-    const handler = (e) => {
+
+    let composing = false;
+    textarea.addEventListener("compositionstart", () => { composing = true; });
+    textarea.addEventListener("compositionend",   () => { composing = false; });
+
+    const onKeyDown = (e) => {
         const key = e.key || e.keyCode;
         const isEnter = key === "Enter" || key === 13;
-        if (isEnter && !e.shiftKey && !e.isComposing && !e.repeat) {
+
+        // Only send on plain Enter (no modifiers) and never while composing text
+        if (isEnter &&
+            !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey &&
+            !composing && !e.repeat) {
             e.preventDefault();
             sendCallback();
         }
     };
-    textarea.addEventListener("keydown", handler);
+
+    // Capture = true to run before other bubbling listeners
+    textarea.addEventListener("keydown", onKeyDown, { capture: true });
 };
 
 document.addEventListener("DOMContentLoaded", () => {
