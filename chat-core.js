@@ -4,10 +4,9 @@ function getPollinationsToken() {
         const qs = new URLSearchParams(location.search);
         const fromQS = qs.get('token');
         const fromHash = new URLSearchParams(location.hash.slice(1)).get('token');
-        const fromLocal = localStorage.getItem('POLLINATIONS_TOKEN');
-        return fromQS || fromHash || fromLocal || window.POLLINATIONS_TOKEN || '';
+        return fromQS || fromHash || window.POLLINATIONS_TOKEN || '';
     } catch {
-        return localStorage.getItem('POLLINATIONS_TOKEN') || '';
+        return window.POLLINATIONS_TOKEN || '';
     }
 }
 
