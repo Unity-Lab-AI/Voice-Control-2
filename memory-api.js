@@ -110,6 +110,31 @@ document.addEventListener("DOMContentLoaded", () => {
     setVoicePreference: function(enabled) {
       const text = `Voice Preference: User prefers AI responses to be ${enabled ? 'spoken aloud' : 'not spoken'}.`;
       return this.updateOrAddMemory("Voice Preference:", text);
+    },
+
+    loadPastImages: function(callback) {
+      let images = [];
+      try {
+        images = JSON.parse(localStorage.getItem('pastImages')) || [];
+      } catch (err) {
+        console.warn('Failed to load past images:', err);
+        images = [];
+      }
+      if (Array.isArray(images) && typeof callback === 'function') {
+        images.forEach(url => callback(url));
+      }
+      return images;
+    },
+
+    saveImage: function(url) {
+      if (!url) return;
+      try {
+        const images = JSON.parse(localStorage.getItem('pastImages')) || [];
+        images.push(url);
+        localStorage.setItem('pastImages', JSON.stringify(images));
+      } catch (err) {
+        console.error('Error saving image:', err);
+      }
     }
   };
 

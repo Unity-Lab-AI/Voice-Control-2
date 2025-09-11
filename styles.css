@@ -961,3 +961,43 @@ body {
   z-index: 1;
   pointer-events: none;
 }
+
+/* Bottom gallery for past screensaver images */
+.gallery-wrapper {
+  position: fixed;
+  bottom: 0;
+  left: 260px;
+  right: 0;
+  background: rgba(0,0,0,0.7);
+  padding: 8px;
+  border-top: 2px solid #505050;
+  z-index: 50;
+}
+
+#past-image-gallery {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+#past-image-gallery img.thumbnail {
+  width: 100px;
+  height: 70px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  transition: border 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+
+#past-image-gallery img.thumbnail:hover {
+  border: 2px solid #00ffcc;
+  transform: scale(1.05);
+}
+
+#past-image-gallery img.thumbnail.selected {
+  border: 2px solid #ffcc00;
+}
