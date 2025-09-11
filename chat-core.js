@@ -451,13 +451,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return found;
     }
 
-    function extractAIContent(response) {
-        if (response.choices?.[0]?.message?.content) return response.choices[0].message.content;
-        if (response.choices?.[0]?.text) return response.choices[0].text;
-        if (response.response) return response.response;
-        if (typeof response === "string") return response;
-        return "Sorry, I couldn't process that response.";
-    }
+    // Directly handle whatever response shape the API returns without filtering.
 
     function speakSentences(sentences, index = 0) {
         if (index >= sentences.length) {
@@ -501,7 +495,16 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(res => res.json())
             .then(data => {
                 loadingDiv.remove();
-                let aiContent = extractAIContent(data);
+                let aiContent =
+                    data?.choices?.[0]?.message?.content ||
+                    data?.choices?.[0]?.text ||
+                    data?.response ||
+                    data?.text ||
+                    data?.output ||
+                    data;
+                if (typeof aiContent !== "string") {
+                    aiContent = JSON.stringify(aiContent);
+                }
                 if (aiContent) {
                     const foundMemories = parseMemoryBlocks(aiContent);
                     foundMemories.forEach(m => Memory.addMemoryEntry(m));
