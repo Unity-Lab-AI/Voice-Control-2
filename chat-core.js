@@ -1,27 +1,9 @@
-// ===== token.js =====
-function getPollinationsToken() {
-    try {
-        const qs = new URLSearchParams(location.search);
-        const fromQS = qs.get('token');
-        const fromHash = new URLSearchParams(location.hash.slice(1)).get('token');
-        return fromQS || fromHash || window.POLLINATIONS_TOKEN || '';
-    } catch {
-        return window.POLLINATIONS_TOKEN || '';
-    }
-}
-
 // ===== network.js =====
 async function pollinationsFetch(url, options = {}, { timeoutMs = 45000 } = {}) {
-    const urlObj = new URL(url);
-    if (urlObj.hostname.includes('pollinations.ai')) {
-        const t = getPollinationsToken();
-        if (t && !urlObj.searchParams.has('token')) urlObj.searchParams.set('token', t);
-    }
-
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(new DOMException('timeout', 'AbortError')), timeoutMs);
     try {
-        const res = await fetch(urlObj.toString(), { ...options, signal: controller.signal, cache: 'no-store' });
+        const res = await fetch(url, { ...options, signal: controller.signal, cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res;
     } finally {
@@ -505,10 +487,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        const messages = [{ role: "user", content: window.aiInstructions }];
+        let prompt = window.aiInstructions;
         const memories = Memory.getMemories();
         if (memories?.length) {
-            messages.push({ role: "user", content: `Relevant memory:\n${memories.join("\n")}\nUse it in your response.` });
+            prompt += `\nRelevant memory:\n${memories.join("\n")}\nUse it in your response.`;
         }
 
         const HISTORY = 10;
@@ -516,36 +498,27 @@ document.addEventListener("DOMContentLoaded", () => {
         const start = Math.max(0, end - HISTORY);
         for (let i = start; i < end; i++) {
             const m = currentSession.messages[i];
-            messages.push({ role: m.role === "ai" ? "assistant" : m.role, content: m.content });
+            prompt += `\n${m.role === "ai" ? "AI" : "User"}: ${m.content}`;
         }
 
         const lastUser = overrideContent || currentSession.messages[end]?.content;
         if (lastUser) {
-            messages.push({ role: "user", content: lastUser });
+            prompt += `\nUser: ${lastUser}`;
         }
 
         const model = (document.getElementById("model-select")?.value) || currentSession.model || "unity";
-        const seed = randomSeed();
-        const token = encodeURIComponent(getPollinationsToken());
-        const apiUrl = `https://text.pollinations.ai/openai?model=${encodeURIComponent(model)}&seed=${seed}&token=${token}&safe=false`;
+        const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=${encodeURIComponent(model)}`;
 
         try {
             const res = await window.pollinationsFetch(apiUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Accept": "application/json" },
-                body: JSON.stringify({ messages })
+                method: "GET",
+                headers: { "Accept": "text/plain" }
             }, { timeoutMs: 45000 });
-            const data = await res.json();
+            const aiContentRaw = await res.text();
 
             loadingDiv.remove();
 
-            let aiContent =
-                data?.choices?.[0]?.message?.content ??
-                data?.choices?.[0]?.text ??
-                data?.response ??
-                data?.text ??
-                data?.output ??
-                (typeof data === "string" ? data : JSON.stringify(data));
+            let aiContent = aiContentRaw;
 
             const memRegex = /\[memory\]([\s\S]*?)\[\/memory\]/gi;
             let m;

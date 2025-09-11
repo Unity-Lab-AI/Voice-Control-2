@@ -141,20 +141,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function fetchDynamicPrompt() {
         const metaPrompt = "Generate unique, new, fucked up and explicit wild image prompts as text only of outlandish and psychologically thrilling images. ie demented, evil, psychotic art, under 125 characters.";
-        const seed = generateSeed();
-        const token = encodeURIComponent(getPollinationsToken());
-        const apiUrl = `https://text.pollinations.ai/openai?model=unity&seed=${seed}&token=${token}&safe=false`;
+        const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(metaPrompt)}?model=unity`;
         try {
             const response = await window.pollinationsFetch(apiUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Accept: "application/json" },
-                cache: "no-store",
-                body: JSON.stringify({
-                    messages: [{ role: "user", content: metaPrompt }]
-                })
+                method: "GET",
+                headers: { Accept: "text/plain" },
+                cache: "no-store"
             });
-            const data = await response.json();
-            const generatedPrompt = data?.choices?.[0]?.message?.content;
+            const generatedPrompt = await response.text();
             if (!generatedPrompt) throw new Error("No prompt returned from API");
             return generatedPrompt;
         } catch (err) {
@@ -207,9 +201,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const model = settings.model || "flux";
         const enhance = settings.enhance;
         const priv = settings.priv;
-        const token = encodeURIComponent(getPollinationsToken());
 
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&model=${model}&nologo=true&private=${priv}&enhance=${enhance}&nolog=true&referrer=unityailab.com&token=${token}`;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&model=${model}&nologo=true&private=${priv}&enhance=${enhance}&nolog=true&referrer=unityailab.com`;
         console.log("Generated new image URL:", url);
 
         const nextImage = currentImage === 'image1' ? 'image2' : 'image1';
