@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const { chatBox, chatInput, clearChatBtn, voiceToggleBtn, modelSelect, synth, autoSpeakEnabled, speakMessage, stopSpeaking, showToast, toggleSpeechRecognition, initSpeechRecognition, processAIInstructions, handleVoiceCommand, speakSentences } = window._chatInternals;
+    const { chatBox, chatInput, clearChatBtn, voiceToggleBtn, modelSelect, synth, autoSpeakEnabled, speakMessage, stopSpeaking, showToast, toggleSpeechRecognition, initSpeechRecognition, handleVoiceCommand, speakSentences } = window._chatInternals;
     const imagePatterns = window.imagePatterns;
     function generateSessionTitle(messages) {
         let title = "";
@@ -54,16 +54,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (role === "ai") {
             let lastIndex = 0;
             const codeBlockRegex = /\[CODE\]\s*```(\w+)\n([\s\S]*?)\n```\s*\[\/CODE\]/g;
-            const imgRegex = /(https:\/\/image\.pollinations\.ai\/prompt\/[^ ]+)/g;
-            let displayContent = content.replace(imgRegex, "").replace(/\*\*Generated Image:\*\*/, "").trim();
             let match;
             while ((match = codeBlockRegex.exec(content)) !== null) {
                 const matchStart = match.index;
                 const matchEnd = matchStart + match[0].length;
                 if (matchStart > lastIndex) {
-                    const textPart = content.substring(lastIndex, matchStart).replace(imgRegex, "").replace(/\*\*Generated Image:\*\*/, "").trim();
-                    if (textPart) {
-                        const textNode = document.createTextNode(textPart);
+                    const textPart = content.substring(lastIndex, matchStart);
+                    if (textPart.trim()) {
+                        const textNode = document.createTextNode(textPart.trim());
                         bubbleContent.appendChild(textNode);
                     }
                 }
@@ -77,10 +75,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 bubbleContent.appendChild(pre);
                 lastIndex = matchEnd;
             }
-            if (lastIndex < displayContent.length) {
-                const remainingText = displayContent.substring(lastIndex).trim();
-                if (remainingText) {
-                    const textNode = document.createTextNode(remainingText);
+            if (lastIndex < content.length) {
+                const remainingText = content.substring(lastIndex);
+                if (remainingText.trim()) {
+                    const textNode = document.createTextNode(remainingText.trim());
                     bubbleContent.appendChild(textNode);
                 }
             }
