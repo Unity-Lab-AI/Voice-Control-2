@@ -496,7 +496,15 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBox.appendChild(loadingDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        await window.aiInstructionPromise;
+        if (!window.aiInstructions) {
+            try {
+                const res = await fetch("ai-instruct.txt", { cache: "no-store" });
+                window.aiInstructions = await res.text();
+            } catch (e) {
+                window.aiInstructions = "";
+            }
+        }
+
         const messages = [{ role: "user", content: window.aiInstructions }];
         const memories = Memory.getMemories();
         if (memories?.length) {
