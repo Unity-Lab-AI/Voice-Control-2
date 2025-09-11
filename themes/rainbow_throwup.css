@@ -113,15 +113,9 @@ body {
 
 /* Send and voice buttons */
 #send-button,
-#voice-input-btn {
-  background-color: #FFABAB;
-  color: #2C2C2C;
-}
+
 #send-button:hover,
-#voice-input-btn:hover {
-  background-color: #FFD6A5;
-  color: #2C2C2C;
-}
+
 #send-button:disabled {
   background-color: #FFABAB;
   color: #2C2C2C;
@@ -143,7 +137,7 @@ body {
 }
 
 /* Voice chat controls */
-#voice-toggle.active {
+#voice-toggle.active, #voice-chat-toggle.active {
   background-color: #FFD6A5;
   color: #2C2C2C;
 }
@@ -300,35 +294,7 @@ body {
 }
 
 /* Voice chat modal */
-.voice-chat-modal {
-  background-color: #9BF6FF;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.7);
-}
-.voice-status {
-  background-color: #9BF6FF;
-  border: 1px solid #A0C4FF;
-  color: #2C2C2C;
-}
-.voice-btn {
-  background-color: #FFABAB;
-  color: #2C2C2C;
-}
-.voice-btn:hover {
-  background-color: #FFD6A5;
-  color: #2C2C2C;
-}
-.voice-btn:disabled {
-  background-color: #FFB1C2;
-  color: #2C2C2C;
-}
-.voice-btn.listening {
-  background-color: #f44336;
-}
-.transcript {
-  background-color: #9BF6FF;
-  border: 1px solid #A0C4FF;
-  color: #2C2C2C;
-}
+
 
 /* Personalization modal */
 .personalization-form .form-group {
@@ -601,15 +567,9 @@ body {
 
 /* Send and voice buttons */
 #send-button,
-#voice-input-btn {
-  background-color: #FFABAB;
-  color: #2C2C2C;
-}
+
 #send-button:hover,
-#voice-input-btn:hover {
-  background-color: #FFD6A5;
-  color: #2C2C2C;
-}
+
 #send-button:disabled {
   background-color: #FFABAB;
   color: #2C2C2C;
@@ -788,35 +748,7 @@ body {
 }
 
 /* Voice chat modal */
-.voice-chat-modal {
-  background-color: #9BF6FF;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.7);
-}
-.voice-status {
-  background-color: #9BF6FF;
-  border: 1px solid #A0C4FF;
-  color: #2C2C2C;
-}
-.voice-btn {
-  background-color: #FFABAB;
-  color: #2C2C2C;
-}
-.voice-btn:hover {
-  background-color: #FFD6A5;
-  color: #2C2C2C;
-}
-.voice-btn:disabled {
-  background-color: #FFB1C2;
-  color: #2C2C2C;
-}
-.voice-btn.listening {
-  background-color: #f44336;
-}
-.transcript {
-  background-color: #9BF6FF;
-  border: 1px solid #A0C4FF;
-  color: #2C2C2C;
-}
+
 
 /* Personalization modal */
 .personalization-form .form-group {

@@ -570,31 +570,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     checkFirstLaunch();
-    function setupVoiceInputButton() {
-        if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
-            const inputButtonsContainer = document.querySelector(".input-buttons-container");
-            if (!window._chatInternals.voiceInputBtn && inputButtonsContainer) {
-                const voiceInputBtn = document.createElement("button");
-                voiceInputBtn.id = "voice-input-btn";
-                voiceInputBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-                voiceInputBtn.title = "Voice input";
-                inputButtonsContainer.insertBefore(voiceInputBtn, document.getElementById("send-button"));
-                window._chatInternals.setVoiceInputButton(voiceInputBtn);
-                let voiceBuffer = "";
-                let silenceTimeout = null;
-                voiceInputBtn.addEventListener("click", () => {
-                    toggleSpeechRecognition();
-                });
-            }
-        } else {
-            const voiceInputBtn = document.getElementById("voice-input-btn");
-            if (voiceInputBtn) {
-                voiceInputBtn.disabled = true;
-                voiceInputBtn.title = "Voice input not supported in this browser";
-            }
+    function setupVoiceChatToggle() {
+        const btn = document.getElementById("voice-chat-toggle");
+        if (!btn) return;
+        if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+            btn.disabled = true;
+            btn.title = "Voice input not supported in this browser";
+            return;
         }
+        btn.title = "Toggle voice input";
+        window._chatInternals.setVoiceInputButton(btn);
+        btn.addEventListener("click", toggleSpeechRecognition);
     }
-    setupVoiceInputButton();
+    setupVoiceChatToggle();
     document.addEventListener('click', function(e) {
         if (e.target.closest('.image-button-container')) {
             e.preventDefault();
@@ -609,224 +597,8 @@ document.addEventListener("DOMContentLoaded", () => {
         chatInput.disabled = false;
         chatInput.focus();
     }
-    const voiceChatModal = document.getElementById("voice-chat-modal");
-    const openVoiceChatModalBtn = document.getElementById("open-voice-chat-modal");
-    const closeVoiceChatModalBtn = document.getElementById("voice-chat-modal-close");
     const voiceSettingsModal = document.getElementById("voice-settings-modal");
     const openVoiceSettingsModalBtn = document.getElementById("open-voice-settings-modal");
-    const voiceChatImage = document.getElementById("voice-chat-image");
-    let slideshowInterval = null;
-    function startVoiceChatSlideshow() {
-        if (slideshowInterval) clearInterval(slideshowInterval);
-        const currentSession = Storage.getCurrentSession();
-        let lastMessage = currentSession.messages.slice(-1)[0]?.content || "default scene";
-        let imagePrompt = "";
-        for (const patternObj of imagePatterns) {
-            const match = lastMessage.match(patternObj.pattern);
-            if (match) {
-                imagePrompt = match[patternObj.group].trim();
-                break;
-            }
-        }
-        imagePrompt += ", origami";
-        if (imagePrompt.length > 100) {
-            imagePrompt = imagePrompt.substring(0, 100);
-        }
-        function updateImage() {
-            const seed = Math.floor(Math.random() * 1000000);
-            const imageId = `voice-img-${Date.now()}`;
-            localStorage.setItem(`voiceImageId_${imageId}`, imageId);
-            const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=512&height=512&seed=${seed}&nolog=true&referrer=unityailab.com`;
-            voiceChatImage.src = imageUrl;
-            voiceChatImage.dataset.imageId = imageId;
-            voiceChatImage.onload = () => {
-                attachImageButtons(voiceChatImage, imageId);
-            };
-            voiceChatImage.onerror = () => {
-                showToast("Failed to load slideshow image");
-            };
-        }
-        updateImage();
-        slideshowInterval = setInterval(updateImage, 10000);
-    }
-    function stopVoiceChatSlideshow() {
-        if (slideshowInterval) {
-            clearInterval(slideshowInterval);
-            slideshowInterval = null;
-        }
-    }
-    let voiceBuffer = "";
-    let silenceTimeout = null;
-    function setupCustomSpeechRecognition() {
-        if (!window._chatInternals.recognition) {
-            if ('webkitSpeechRecognition' in window) {
-                window._chatInternals.recognition = new webkitSpeechRecognition();
-            } else if ('SpeechRecognition' in window) {
-                window._chatInternals.recognition = new SpeechRecognition();
-            } else {
-                showToast("Speech recognition not supported in this browser");
-                return false;
-            }
-            const recognition = window._chatInternals.recognition;
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
-            recognition.onstart = () => {
-                window._chatInternals.isListening = true;
-                showToast("Voice recognition active");
-                const startBtn = document.getElementById("voice-chat-start");
-                const stopBtn = document.getElementById("voice-chat-stop");
-                if (startBtn) startBtn.disabled = true;
-                if (stopBtn) stopBtn.disabled = false;
-            };
-            recognition.onend = () => {
-                window._chatInternals.isListening = false;
-                const startBtn = document.getElementById("voice-chat-start");
-                const stopBtn = document.getElementById("voice-chat-stop");
-                if (startBtn) startBtn.disabled = false;
-                if (stopBtn) stopBtn.disabled = true;
-            };
-            recognition.onerror = (event) => {
-                window._chatInternals.isListening = false;
-                const startBtn = document.getElementById("voice-chat-start");
-                const stopBtn = document.getElementById("voice-chat-stop");
-                if (startBtn) startBtn.disabled = false;
-                if (stopBtn) stopBtn.disabled = true;
-                if (event.error === "no-speech") {
-                    showToast("No speech detected. Please try again.");
-                } else if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-                    showToast("Microphone access denied. Please allow microphone access in your browser settings.");
-                } else {
-                    showToast("Voice recognition error: " + event.error);
-                }
-            };
-            recognition.onresult = (event) => {
-                let interimTranscript = "";
-                let finalTranscript = "";
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        const processed = transcript.trim();
-                        if (!handleVoiceCommand(processed)) {
-                            finalTranscript += processed + " ";
-                        }
-                    } else {
-                        interimTranscript += transcript;
-                    }
-                }
-                voiceBuffer += finalTranscript;
-                chatInput.value = voiceBuffer + interimTranscript;
-                if (finalTranscript) {
-                    clearTimeout(silenceTimeout);
-                    silenceTimeout = setTimeout(() => {
-                        if (voiceBuffer.trim()) {
-                            window.addNewMessage({ role: "user", content: voiceBuffer.trim() });
-                            window.sendToPollinations(() => {
-                                startVoiceChatSlideshow();
-                                chatInput.focus();
-                            });
-                            voiceBuffer = "";
-                            chatInput.value = "";
-                        }
-                    }, 1500);
-                }
-            };
-        }
-        return true;
-    }
-    function setupVoiceChatControls() {
-        const modalBody = voiceChatModal.querySelector(".modal-body");
-        let voiceSelectChat = modalBody.querySelector("#voice-select-voicechat");
-        if (!voiceSelectChat) {
-            const voiceSelectContainer = document.createElement("div");
-            voiceSelectContainer.className = "form-group mb-3";
-            const voiceSelectLabel = document.createElement("label");
-            voiceSelectLabel.className = "form-label";
-            voiceSelectLabel.innerHTML = '<i class="fas fa-headset"></i> Voice Selection:';
-            voiceSelectLabel.htmlFor = "voice-select-voicechat";
-            voiceSelectChat = document.createElement("select");
-            voiceSelectChat.id = "voice-select-voicechat";
-            voiceSelectChat.className = "form-control";
-            voiceSelectContainer.appendChild(voiceSelectLabel);
-            voiceSelectContainer.appendChild(voiceSelectChat);
-            const insertAfterElement = modalBody.querySelector("p") || voiceChatImage;
-            if (insertAfterElement && insertAfterElement.nextSibling) {
-                modalBody.insertBefore(voiceSelectContainer, insertAfterElement.nextSibling);
-            } else {
-                modalBody.appendChild(voiceSelectContainer);
-            }
-        }
-        const existingControls = modalBody.querySelector(".voice-chat-controls");
-        if (existingControls) existingControls.remove();
-        const controlsDiv = document.createElement("div");
-        controlsDiv.className = "voice-chat-controls";
-        controlsDiv.style.display = "flex";
-        controlsDiv.style.gap = "10px";
-        controlsDiv.style.marginTop = "15px";
-        const startBtn = document.createElement("button");
-        startBtn.id = "voice-chat-start";
-        startBtn.className = "btn btn-primary";
-        startBtn.textContent = "Start Listening";
-        startBtn.style.width = "100%";
-        startBtn.style.padding = "10px";
-        startBtn.disabled = window._chatInternals.isListening;
-        const stopBtn = document.createElement("button");
-        stopBtn.id = "voice-chat-stop";
-        stopBtn.className = "btn btn-danger";
-        stopBtn.textContent = "Stop Listening";
-        stopBtn.style.width = "100%";
-        stopBtn.style.padding = "10px";
-        stopBtn.disabled = !window._chatInternals.isListening;
-        controlsDiv.appendChild(startBtn);
-        controlsDiv.appendChild(stopBtn);
-        modalBody.appendChild(controlsDiv);
-        startBtn.addEventListener("click", () => {
-            if (!setupCustomSpeechRecognition()) {
-                showToast("Failed to initialize speech recognition");
-                return;
-            }
-            const recognition = window._chatInternals.recognition;
-            try {
-                recognition.start();
-                startVoiceChatSlideshow();
-            } catch (error) {
-                showToast("Could not start speech recognition: " + error.message);
-            }
-        });
-        stopBtn.addEventListener("click", () => {
-            if (window._chatInternals.recognition && window._chatInternals.isListening) {
-                window._chatInternals.recognition.stop();
-                stopVoiceChatSlideshow();
-                showToast("Voice recognition stopped");
-            }
-        });
-    }
-    function updateAllVoiceDropdowns(selectedIndex) {
-        const voiceDropdownIds = [
-            "voice-select",
-            "voice-select-modal",
-            "voice-select-settings",
-            "voice-select-voicechat"
-        ];
-        voiceDropdownIds.forEach(id => {
-            const dropdown = document.getElementById(id);
-            if (dropdown) {
-                dropdown.value = selectedIndex;
-            }
-        });
-    }
-    openVoiceChatModalBtn.addEventListener("click", () => {
-        voiceChatModal.classList.remove("hidden");
-        setupVoiceChatControls();
-        window._chatInternals.populateAllVoiceDropdowns();
-    });
-    closeVoiceChatModalBtn.addEventListener("click", () => {
-        voiceChatModal.classList.add("hidden");
-        if (window._chatInternals.recognition && window._chatInternals.isListening) {
-            window._chatInternals.recognition.stop();
-        }
-        stopVoiceChatSlideshow();
-    });
     openVoiceSettingsModalBtn.addEventListener("click", () => {
         voiceSettingsModal.classList.remove("hidden");
         window._chatInternals.populateAllVoiceDropdowns();
@@ -856,8 +628,8 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("selectedVoiceIndex", selectedVoiceIndex);
         localStorage.setItem("voiceSpeed", voiceSpeed);
         localStorage.setItem("voicePitch", voicePitch);
+        window._chatInternals.updateAllVoiceDropdowns(selectedVoiceIndex);
         window._chatInternals.updateVoiceToggleUI();
-        updateAllVoiceDropdowns(selectedVoiceIndex);
         voiceSettingsModal.classList.add("hidden");
         showToast("Voice settings saved");
     });

@@ -379,8 +379,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function updateVoiceToggleUI() {
         if (voiceToggleBtn) {
-            voiceToggleBtn.textContent = autoSpeakEnabled ? "🔊 Voice On" : "🔇 Voice Off";
-            voiceToggleBtn.style.backgroundColor = autoSpeakEnabled ? "#4CAF50" : "";
+            if (autoSpeakEnabled) {
+                voiceToggleBtn.innerHTML = '<i class="fas fa-volume-up"></i> AI Voice On';
+                voiceToggleBtn.classList.add("active");
+            } else {
+                voiceToggleBtn.innerHTML = '<i class="fas fa-volume-mute"></i> AI Voice Off';
+                voiceToggleBtn.classList.remove("active");
+            }
         }
     }
 
@@ -592,8 +597,8 @@ document.addEventListener("DOMContentLoaded", () => {
             recognition.onstart = () => {
                 isListening = true;
                 if (voiceInputBtn) {
-                    voiceInputBtn.classList.add("listening");
-                    voiceInputBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+                    voiceInputBtn.classList.add("active");
+                    voiceInputBtn.innerHTML = '<i class="fas fa-headset"></i> Voice Chat On';
                 }
             };
 
@@ -627,8 +632,8 @@ document.addEventListener("DOMContentLoaded", () => {
             recognition.onerror = (event) => {
                 isListening = false;
                 if (voiceInputBtn) {
-                    voiceInputBtn.classList.remove("listening");
-                    voiceInputBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                    voiceInputBtn.classList.remove("active");
+                    voiceInputBtn.innerHTML = '<i class="fas fa-headset"></i> Voice Chat Off';
                 }
                 console.error("Speech recognition error:", event.error);
             };
@@ -636,8 +641,8 @@ document.addEventListener("DOMContentLoaded", () => {
             recognition.onend = () => {
                 isListening = false;
                 if (voiceInputBtn) {
-                    voiceInputBtn.classList.remove("listening");
-                    voiceInputBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                    voiceInputBtn.classList.remove("active");
+                    voiceInputBtn.innerHTML = '<i class="fas fa-headset"></i> Voice Chat Off';
                 }
             };
 
