@@ -1,7 +1,35 @@
-// Minimal helper to call Pollinations APIs without modifying the request.
-window.pollinationsFetch = function (url, options = {}) {
-    return fetch(url, options);
-};
+// ===== token.js =====
+function getPollinationsToken() {
+    try {
+        const qs = new URLSearchParams(location.search);
+        const fromQS = qs.get('token');
+        const fromHash = new URLSearchParams(location.hash.slice(1)).get('token');
+        const fromLocal = localStorage.getItem('POLLINATIONS_TOKEN');
+        return fromQS || fromHash || fromLocal || window.POLLINATIONS_TOKEN || '';
+    } catch {
+        return localStorage.getItem('POLLINATIONS_TOKEN') || '';
+    }
+}
+
+// ===== network.js =====
+async function pollinationsFetch(url, options = {}, { timeoutMs = 45000 } = {}) {
+    const urlObj = new URL(url);
+    if (urlObj.hostname.includes('pollinations.ai')) {
+        const t = getPollinationsToken();
+        if (t && !urlObj.searchParams.has('token')) urlObj.searchParams.set('token', t);
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(new DOMException('timeout', 'AbortError')), timeoutMs);
+    try {
+        const res = await fetch(urlObj.toString(), { ...options, signal: controller.signal, cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+window.pollinationsFetch = pollinationsFetch;
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -441,15 +469,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     window.randomSeed = randomSeed;
 
-    function parseMemoryBlocks(text) {
-        const memRegex = /\[memory\]([\s\S]*?)\[\/memory\]/gi;
-        const found = [];
-        let match;
-        while ((match = memRegex.exec(text)) !== null) {
-            found.push(match[1].trim());
-        }
-        return found;
-    }
 
     // Directly handle whatever response shape the API returns without filtering.
 
@@ -460,77 +479,75 @@ document.addEventListener("DOMContentLoaded", () => {
         speakMessage(sentences[index], () => speakSentences(sentences, index + 1));
     }
 
-    window.sendToPollinations = (callback = null, overrideContent = null) => {
+    window.sendToPollinations = async function sendToPollinations(callback = null, overrideContent = null) {
         const currentSession = Storage.getCurrentSession();
         const loadingDiv = document.createElement("div");
-        loadingDiv.id = `loading-${Date.now()}`;
-        loadingDiv.classList.add("message", "ai-message");
-        Object.assign(loadingDiv.style, { float: "left", clear: "both", maxWidth: "60%", marginLeft: "10px" });
+        loadingDiv.className = "message ai-message";
         loadingDiv.textContent = "Thinking...";
         chatBox.appendChild(loadingDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
+
         const messages = [{ role: "system", content: window.memoryInstructions }];
         const memories = Memory.getMemories();
-        if (memories?.length > 0) {
-            messages.push({ role: "user", content: "Relevant memory:\n" + memories.join("\n") + "\nUse it in your response." });
+        if (memories?.length) {
+            messages.push({ role: "user", content: `Relevant memory:\n${memories.join("\n")}\nUse it in your response.` });
         }
-        const maxHistory = 10;
-        const startIdx = Math.max(0, currentSession.messages.length - maxHistory);
-        for (let i = startIdx; i < currentSession.messages.length; i++) {
-            const msg = currentSession.messages[i];
-            messages.push({ role: msg.role === "ai" ? "assistant" : msg.role, content: msg.content });
+
+        const HISTORY = 10;
+        const start = Math.max(0, currentSession.messages.length - HISTORY);
+        for (let i = start; i < currentSession.messages.length; i++) {
+            const m = currentSession.messages[i];
+            messages.push({ role: m.role === "ai" ? "assistant" : m.role, content: m.content });
         }
+
         if (overrideContent && messages[messages.length - 1].content !== overrideContent) {
             messages.push({ role: "user", content: overrideContent });
         }
-        const selectedModel = modelSelect.value || currentSession.model || "unity";
-        const body = { messages, model: selectedModel };
-        const seed = Math.floor(Math.random() * 1000000).toString().padStart(6, "0");
-        const token = encodeURIComponent(window.POLLINATIONS_TOKEN || "");
-        const apiUrl =
-            `https://text.pollinations.ai/openai?&model=${encodeURIComponent(selectedModel)}&seed=${seed}&token=${token}`;
-        window.pollinationsFetch(apiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify(body),
-            cache: "no-store",
-        })
-            .then(res => res.json())
-            .then(data => {
-                loadingDiv.remove();
-                let aiContent =
-                    data?.choices?.[0]?.message?.content ||
-                    data?.choices?.[0]?.text ||
-                    data?.response ||
-                    data?.text ||
-                    data?.output ||
-                    data;
-                if (typeof aiContent !== "string") {
-                    aiContent = JSON.stringify(aiContent);
-                }
-                if (aiContent) {
-                    const foundMemories = parseMemoryBlocks(aiContent);
-                    foundMemories.forEach(m => Memory.addMemoryEntry(m));
-                    window.addNewMessage({ role: "ai", content: aiContent });
-                    if (autoSpeakEnabled) {
-                        const sentences = aiContent.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
-                        speakSentences(sentences);
-                    } else {
-                        stopSpeaking();
-                    }
-                    if (callback) callback();
-                }
-            })
-            .catch(err => {
-                loadingDiv.textContent = "Error: Failed to get a response. Please try again.";
-                setTimeout(() => loadingDiv.remove(), 3000);
-                console.error("Error sending to Pollinations:", err);
-                if (callback) callback();
-                const btn = window._chatInternals?.sendButton || document.getElementById("send-button");
-                const input = window._chatInternals?.chatInput || document.getElementById("chat-input");
-                if (btn) btn.disabled = false;
-                if (input) input.disabled = false;
-            });
+
+        const model = (document.getElementById("model-select")?.value) || currentSession.model || "unity";
+        const apiUrl = `https://text.pollinations.ai/openai?model=${encodeURIComponent(model)}`;
+
+        try {
+            const res = await window.pollinationsFetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                body: JSON.stringify({ messages, model })
+            }, { timeoutMs: 45000 });
+            const data = await res.json();
+
+            loadingDiv.remove();
+
+            let aiContent =
+                data?.choices?.[0]?.message?.content ??
+                data?.choices?.[0]?.text ??
+                data?.response ??
+                data?.text ??
+                data?.output ??
+                (typeof data === "string" ? data : JSON.stringify(data));
+
+            const memRegex = /\[memory\]([\s\S]*?)\[\/memory\]/gi;
+            let m;
+            while ((m = memRegex.exec(aiContent)) !== null) Memory.addMemoryEntry(m[1].trim());
+            aiContent = aiContent.replace(memRegex, "").trim();
+
+            window.addNewMessage({ role: "ai", content: aiContent });
+            if (autoSpeakEnabled) {
+                const sentences = aiContent.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+                speakSentences(sentences);
+            } else {
+                stopSpeaking();
+            }
+            if (callback) callback();
+        } catch (err) {
+            loadingDiv.textContent = "Error: Failed to get a response.";
+            setTimeout(() => loadingDiv.remove(), 3000);
+            console.error("Pollinations error:", err);
+            if (callback) callback();
+            const btn = window._chatInternals?.sendButton || document.getElementById("send-button");
+            const input = window._chatInternals?.chatInput || document.getElementById("chat-input");
+            if (btn) btn.disabled = false;
+            if (input) input.disabled = false;
+        }
     };
 
     function initSpeechRecognition() {
