@@ -285,15 +285,8 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         };
         simpleSendBtn.addEventListener("click", handleSimpleSend);
-
         // Send on Enter; newline with Shift+Enter
-        simpleInput.addEventListener('keydown', (e) => {
-            const isEnter = e.key === 'Enter' || e.keyCode === 13;
-            if (isEnter && !e.shiftKey) {
-                e.preventDefault();
-                handleSimpleSend();
-            }
-        });
+        window.setupEnterToSend(simpleInput, handleSimpleSend);
 
         function appendSimpleMessage(role, content, index) {
             const container = document.createElement("div");
