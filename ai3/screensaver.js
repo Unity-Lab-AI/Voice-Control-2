@@ -21,8 +21,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const POLLINATIONS_TOKEN =
         (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
+        new URLSearchParams(window.location.search).get("token") ||
+        window.localStorage?.getItem("pollinationsToken") ||
         window.POLLINATIONS_TOKEN ||
         "";
+
+    if (POLLINATIONS_TOKEN) {
+        try {
+            window.localStorage.setItem("pollinationsToken", POLLINATIONS_TOKEN);
+        } catch (e) {
+            console.warn("Unable to persist Pollinations token:", e);
+        }
+        window.POLLINATIONS_TOKEN = POLLINATIONS_TOKEN;
+    }
 
     // --- Screensaver runtime state --- //
     let screensaverActive = false;
@@ -174,7 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
             nonce: Date.now().toString() + Math.random().toString(36).substring(2)
         };
         const params = new URLSearchParams();
-        params.set("token", POLLINATIONS_TOKEN || "");
+        if (POLLINATIONS_TOKEN) params.set("token", POLLINATIONS_TOKEN);
         params.set("model", body.model);
         params.set("seed", seed);
         const apiUrl = `https://text.pollinations.ai/openai?${params.toString()}`;
