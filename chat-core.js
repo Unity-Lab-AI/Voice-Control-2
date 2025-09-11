@@ -78,24 +78,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let voiceInputBtn = null;
     let slideshowInterval = null;
 
-    function processAIInstructions(text) {
-        return text.replace(/\[(CLICK|SET|UNITY):([^\]]+)\]/gi, (match, action, params) => {
-            const upper = action.toUpperCase();
-            if (upper === "CLICK") {
-                const el = document.querySelector(params.trim());
-                el?.click();
-            } else if (upper === "SET") {
-                const [selector, value] = params.split("=");
-                const el = document.querySelector(selector.trim());
-                if (el) {
-                    el.value = value?.trim() ?? "";
-                    el.dispatchEvent(new Event('change'));
-                }
-            }
-            return '';
-        }).trim();
-    }
-
     function normalize(str) {
         return str?.toLowerCase().trim() || "";
     }
@@ -517,10 +499,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return found;
     }
 
-    function removeMemoryBlocks(text) {
-        return text.replace(/\[memory\][\s\S]*?\[\/memory\]/gi, "");
-    }
-
     function extractAIContent(response) {
         if (response.choices?.[0]?.message?.content) return response.choices[0].message.content;
         if (response.choices?.[0]?.text) return response.choices[0].text;
@@ -559,29 +537,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (overrideContent && messages[messages.length - 1].content !== overrideContent) {
             messages.push({ role: "user", content: overrideContent });
         }
-        const lastUserMsg = messages[messages.length - 1].content.toLowerCase();
-        const isCodeRequest = lastUserMsg.includes("code") ||
-            lastUserMsg.includes("script") ||
-            lastUserMsg.includes("program") ||
-            (lastUserMsg.includes("write a") && (
-                lastUserMsg.includes("function") ||
-                lastUserMsg.includes("class") ||
-                lastUserMsg.includes("method") ||
-                lastUserMsg.includes("javascript") ||
-                lastUserMsg.includes("python") ||
-                lastUserMsg.includes("java") ||
-                lastUserMsg.includes("html") ||
-                lastUserMsg.includes("css")
-            ));
-        const isImageRequest = !isCodeRequest && (
-            imagePatterns.some(p => p.pattern.test(lastUserMsg)) ||
-            ["image", "picture", "show me", "generate an image"].some(k => lastUserMsg.includes(k))
-        );
-        const isBothRequested = isCodeRequest && (
-            lastUserMsg.includes("image") ||
-            lastUserMsg.includes("picture") ||
-            imagePatterns.some(p => p.pattern.test(lastUserMsg))
-        );
         const selectedModel = modelSelect.value || currentSession.model || "unity";
         const seed = Date.now().toString() + Math.random().toString(36).substring(2);
         const body = { messages, model: selectedModel, nonce: seed };
@@ -598,47 +553,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.log("API response received:", data);
                 loadingDiv.remove();
                 let aiContent = extractAIContent(data);
-                let imageUrls = [];
-                if (isCodeRequest && !isBothRequested) {
-                    const codeRegex = /```(\w+)\n([\s\S]*?)\n```/;
-                    const match = aiContent.match(codeRegex);
-                    if (match) {
-                        const language = match[1];
-                        const code = match[2];
-                        aiContent = `[CODE] \`\`\`${language}\n${code}\n\`\`\` [/CODE]`;
-                    } else {
-                        aiContent = `[CODE] \`\`\`javascript\n${aiContent}\n\`\`\` [/CODE]`;
-                    }
-                } else if (isImageRequest && !isCodeRequest) {
-                    let imagePrompt = "";
-                    for (const { pattern, group } of imagePatterns) {
-                        const match = lastUserMsg.match(pattern);
-                        if (match) {
-                            imagePrompt = match[group].trim();
-                            break;
-                        }
-                    }
-                    if (!imagePrompt) {
-                        imagePrompt = lastUserMsg.replace(/show me|generate|image of|picture of|image|picture/gi, "").trim();
-                        if (imagePrompt.length < 5 && aiContent.toLowerCase().includes("image")) {
-                            imagePrompt = aiContent.toLowerCase().replace(/here's an image of|image|to enjoy visually/gi, "").trim();
-                        }
-                    }
-                    imagePrompt = imagePrompt.slice(0, 100);
-                    const seed = randomSeed();
-                    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?height=512&width=512&seed=${seed}`;
-                    aiContent += `\n\n**Generated Image:**\n${imageUrl}`;
-                }
-                const imgRegex = /(https:\/\/image\.pollinations\.ai\/prompt\/[^ ]+)/g;
-                const imgMatches = aiContent.match(imgRegex) || [];
-                imageUrls.push(...imgMatches);
                 if (aiContent) {
                     const foundMemories = parseMemoryBlocks(aiContent);
                     foundMemories.forEach(m => Memory.addMemoryEntry(m));
-                    const cleanedAiContent = processAIInstructions(removeMemoryBlocks(aiContent).trim());
-                    window.addNewMessage({ role: "ai", content: cleanedAiContent });
+                    window.addNewMessage({ role: "ai", content: aiContent });
                     if (autoSpeakEnabled) {
-                        const sentences = cleanedAiContent.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+                        const sentences = aiContent.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
                         speakSentences(sentences);
                     } else {
                         stopSpeaking();
@@ -810,7 +730,6 @@ document.addEventListener("DOMContentLoaded", () => {
         shutUpTTS,
         initSpeechRecognition,
         toggleSpeechRecognition,
-        processAIInstructions,
         handleVoiceCommand,
         findElement,
         executeCommand,
