@@ -1,5 +1,18 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const { chatBox, chatInput, clearChatBtn, voiceToggleBtn, modelSelect, synth, autoSpeakEnabled, speakMessage, stopSpeaking, showToast, toggleSpeechRecognition, initSpeechRecognition, handleVoiceCommand, speakSentences } = window._chatInternals;
+    const {
+        chatBox,
+        chatInput,
+        clearChatBtn,
+        voiceToggleBtn,
+        modelSelect,
+        synth,
+        autoSpeakEnabled,
+        speakMessage,
+        stopSpeaking,
+        showToast,
+        speakSentences
+    } = window._chatInternals || {};
+    const { toggleSpeechRecognition, initSpeechRecognition, handleVoiceCommand } = window._chatInternals || {};
     const imagePatterns = window.imagePatterns;
 
     function openImageModal(imageUrl) {
@@ -580,7 +593,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         btn.title = "Toggle voice input";
         window._chatInternals.setVoiceInputButton(btn);
-        btn.addEventListener("click", toggleSpeechRecognition);
+        btn.addEventListener("click", () => {
+            if (window._chatInternals && typeof window._chatInternals.toggleSpeechRecognition === "function") {
+                window._chatInternals.toggleSpeechRecognition();
+            }
+        });
     }
     setupVoiceChatToggle();
     document.addEventListener('click', function(e) {

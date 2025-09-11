@@ -1,5 +1,18 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const { chatBox, chatInput, clearChatBtn, voiceToggleBtn, modelSelect, synth, autoSpeakEnabled, speakMessage, stopSpeaking, showToast, toggleSpeechRecognition, initSpeechRecognition, handleVoiceCommand, speakSentences } = window._chatInternals;
+    const {
+        chatBox,
+        chatInput,
+        clearChatBtn,
+        voiceToggleBtn,
+        modelSelect,
+        synth,
+        autoSpeakEnabled,
+        speakMessage,
+        stopSpeaking,
+        showToast,
+        speakSentences
+    } = window._chatInternals || {};
+    const { toggleSpeechRecognition, initSpeechRecognition, handleVoiceCommand } = window._chatInternals || {};
     const imagePatterns = window.imagePatterns;
     const randomSeed = window.randomSeed;
     const generateSessionTitle = messages => {
@@ -520,7 +533,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         btn.title = "Toggle voice input";
         window._chatInternals.setVoiceInputButton(btn);
-        btn.addEventListener("click", toggleSpeechRecognition);
+        btn.addEventListener("click", () => {
+            if (window._chatInternals && typeof window._chatInternals.toggleSpeechRecognition === "function") {
+                window._chatInternals.toggleSpeechRecognition();
+            }
+        });
     };
     setupVoiceChatToggle();
     document.addEventListener("click", e => {
@@ -557,7 +574,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     sendButton.addEventListener("click", handleSendMessage);
     // Send on Enter; newline with Shift+Enter
-    window.setupEnterToSend(chatInput, handleSendMessage);
+    if (typeof window.setupEnterToSend === "function") {
+        window.setupEnterToSend(chatInput, handleSendMessage);
+    }
     sendButton.disabled = chatInput.value.trim() === "";
     chatInput.dispatchEvent(new Event("input"));
     const initialSession = Storage.getCurrentSession();
