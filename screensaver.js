@@ -163,12 +163,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const img = new Image();
             img.src = url;
             img.onload = () => resolve(url);
-            img.onerror = () => reject(new Error("Image failed to load"));
+            img.onerror = () => reject(new Error("Image loaded like shit!"));
         });
     }
 
     async function fetchDynamicPrompt() {
-        const metaPrompt = "Generate a single unique, new, fucked up and explicit wild image prompt as text only of outlandish and psychologically thrilling image. i.e. demented, evil, psychotic art, under 125 characters.";
+        const metaPrompt = "Generate exactly one short-125-character, new, fucked up and explicit wild image prompt as text only of outlandish and psychologically thrilling image. i.e. demented, evil, psychotic art.";
         const textModel = document.getElementById("model-select")?.value;
         const seed = generateSeed();
         const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(metaPrompt)}?seed=${seed}&safe=false${textModel ? `&model=${encodeURIComponent(textModel)}` : ""}`;
@@ -179,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 cache: "no-store"
             });
             const generatedPrompt = await response.text();
-            if (!generatedPrompt) throw new Error("No prompt returned from API");
+            if (!generatedPrompt) throw new Error("No fucking prompt returned from API");
             return generatedPrompt;
         } catch (err) {
             console.error("Failed to fetch dynamic prompt:", err);
@@ -725,6 +725,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("Screensaver initialized with dynamic API prompts and streaming thumbnail gallery!");
 });
+
 
 
 
