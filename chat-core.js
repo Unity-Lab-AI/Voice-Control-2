@@ -443,24 +443,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    const imagePatterns = [
-        { pattern: /generate\s(an?\s)?image\s(of|for)\s(.+)/i, group: 3 },
-        { pattern: /create\s(an?\s)?image\s(of|for)\s(.+)/i, group: 3 },
-        { pattern: /make\s(an?\s)?image\s(of|for)\s(.+)/i, group: 3 },
-        { pattern: /show\sme\s(a\s)?picture\s(of|for)\s(.+)/i, group: 3 },
-        { pattern: /display\s(a\s)?picture\s(of|for)\s(.+)/i, group: 3 },
-        { pattern: /create\s(a\s)?picture\s(of|for)\s(.+)/i, group: 3 },
-        { pattern: /make\s(a\s)?picture\s(of|for)\s(.+)/i, group: 3 },
-        { pattern: /display\s(an?\s)?image\s(of|for)\s(.+)/i, group: 3 },
-    ];
-    window.imagePatterns = imagePatterns;
-
-    function randomSeed() {
-        return Math.floor(Math.random() * 1000000).toString();
-    }
-    window.randomSeed = randomSeed;
-
-
     // Directly handle whatever response shape the API returns without filtering.
 
     function speakSentences(sentences, index = 0) {
@@ -710,3 +692,4 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
 });
+
