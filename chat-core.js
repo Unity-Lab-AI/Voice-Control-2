@@ -485,7 +485,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         const selectedModel = modelSelect.value || currentSession.model || "unity";
         const body = { messages, model: selectedModel };
-        const apiUrl = `https://text.pollinations.ai/openai?model=${encodeURIComponent(selectedModel)}`;
+        const seed = Math.floor(Math.random() * 1000000).toString().padStart(6, "0");
+        const token = encodeURIComponent(window.POLLINATIONS_TOKEN || "");
+        const apiUrl =
+            `https://text.pollinations.ai/openai?&model=${encodeURIComponent(selectedModel)}&seed=${seed}&token=${token}`;
         window.pollinationsFetch(apiUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json" },

@@ -149,7 +149,10 @@ document.addEventListener("DOMContentLoaded", () => {
             messages,
             model: "unity"
         };
-        const apiUrl = `https://text.pollinations.ai/openai?model=unity`;
+        const seed = generateSeed();
+        const token = encodeURIComponent(window.POLLINATIONS_TOKEN || "");
+        const apiUrl =
+            `https://text.pollinations.ai/openai?&model=unity&seed=${seed}&token=${token}`;
         try {
             const response = await window.pollinationsFetch(apiUrl, {
                 method: "POST",
