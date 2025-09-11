@@ -297,7 +297,8 @@ document.addEventListener("DOMContentLoaded", () => {
      * @returns {HTMLDivElement} Wrapper element containing the image and controls
      */
     const createImageElement = (url, msgIndex) => {
-        const imageId = `img-${msgIndex}-${Date.now()}`;
+        const uniqueSuffix = Math.random().toString(36).slice(2, 10);
+        const imageId = `img-${msgIndex}-${Date.now()}-${uniqueSuffix}`;
         localStorage.setItem(`imageId_${msgIndex}`, imageId);
         const imageContainer = document.createElement("div");
         imageContainer.className = "ai-image-container";
@@ -316,10 +317,13 @@ document.addEventListener("DOMContentLoaded", () => {
         img.dataset.imageUrl = url;
         img.dataset.imageId = imageId;
         img.crossOrigin = "anonymous";
+        const imgButtonContainer = document.createElement("div");
+        imgButtonContainer.className = "image-button-container";
+        imgButtonContainer.dataset.imageId = imageId;
         img.onload = () => {
             loadingDiv.remove();
             img.style.display = "block";
-            attachImageButtonListeners(img, imageId);
+            attachImageButtonListeners(img, imageId, imgButtonContainer);
         };
         img.onerror = () => {
             loadingDiv.innerHTML = "⚠️ Failed to load image";
@@ -328,9 +332,6 @@ document.addEventListener("DOMContentLoaded", () => {
             loadingDiv.style.alignItems = "center";
         };
         imageContainer.appendChild(img);
-        const imgButtonContainer = document.createElement("div");
-        imgButtonContainer.className = "image-button-container";
-        imgButtonContainer.dataset.imageId = imageId;
         imageContainer.appendChild(imgButtonContainer);
         return imageContainer;
     };
@@ -341,8 +342,8 @@ document.addEventListener("DOMContentLoaded", () => {
      * @param {HTMLImageElement} img - Target image element
      * @param {string} imageId - Identifier used to locate the related button container
      */
-    const attachImageButtonListeners = (img, imageId) => {
-        const imgButtonContainer = document.querySelector(`.image-button-container[data-image-id="${imageId}"]`);
+    const attachImageButtonListeners = (img, imageId, imgButtonContainer = null) => {
+        imgButtonContainer = imgButtonContainer || document.querySelector(`.image-button-container[data-image-id="${imageId}"]`);
         if (!imgButtonContainer) {
             console.warn(`No image button container found for image ID: ${imageId}`);
             return;
