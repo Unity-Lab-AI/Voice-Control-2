@@ -486,7 +486,16 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBox.appendChild(loadingDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        const messages = [{ role: "user", content: window.memoryInstructions }];
+        if (!window.aiInstructions) {
+            try {
+                const res = await fetch("ai-instruct.txt", { cache: "no-store" });
+                window.aiInstructions = await res.text();
+            } catch (e) {
+                window.aiInstructions = "";
+            }
+        }
+
+        const messages = [{ role: "user", content: window.aiInstructions }];
         const memories = Memory.getMemories();
         if (memories?.length) {
             messages.push({ role: "user", content: `Relevant memory:\n${memories.join("\n")}\nUse it in your response.` });
