@@ -5,7 +5,7 @@ async function pollinationsFetch(url, options = {}, { timeoutMs = 45000 } = {}) 
     try {
         const res = await fetch(
             url,
-            { ...options, signal: controller.signal, cache: 'no-store' }
+            { ...options, signal: controller.signal, cache: 'no-store' } // fixed: spread options
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res;
