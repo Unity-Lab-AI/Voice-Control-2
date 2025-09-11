@@ -142,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
     async function fetchDynamicPrompt() {
         const metaPrompt = "Generate an image prompt of something new and wild. Respond with text only.";
         const messages = [
-            { role: "system", content: "Generate unique, wild image prompts as text only, under 100 characters." },
+            { role: "system", content: "Generate unique, new, fucked up and explicit wild image prompts as text only of outlandish and psychologically thrilling images. ie demented, evil, psychotic art, under 100 characters." },
             { role: "user", content: metaPrompt }
         ];
         const body = {
@@ -709,3 +709,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("Screensaver initialized with dynamic API prompts and streaming thumbnail gallery!");
 });
+
