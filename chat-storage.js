@@ -640,7 +640,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const seed = Math.floor(Math.random() * 1000000);
             const imageId = `voice-img-${Date.now()}`;
             localStorage.setItem(`voiceImageId_${imageId}`, imageId);
-            const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=512&height=512&seed=${seed}&nolog=true`;
+            const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=512&height=512&seed=${seed}&nolog=true&referrer=unityailab.com`;
             voiceChatImage.src = imageUrl;
             voiceChatImage.dataset.imageId = imageId;
             voiceChatImage.onload = () => {
