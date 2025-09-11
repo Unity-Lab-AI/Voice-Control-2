@@ -506,7 +506,9 @@ document.addEventListener("DOMContentLoaded", () => {
             prompt += `\nUser: ${lastUser}`;
         }
 
-        const model = (document.getElementById("model-select")?.value) || currentSession.model || "unity";
+        const modelSelectEl = document.getElementById("model-select");
+        const model = modelSelectEl?.value || currentSession.model;
+        if (!model) throw new Error("No model selected");
         const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=${encodeURIComponent(model)}`;
 
         try {
