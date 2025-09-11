@@ -141,30 +141,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function fetchDynamicPrompt() {
         const metaPrompt = "Generate an image prompt of something new and wild. Respond with text only.";
-        const messages = [
-            { role: "system", content: "Generate unique, new, fucked up and explicit wild image prompts as text only of outlandish and psychologically thrilling images. ie demented, evil, psychotic art, under 100 characters." },
-            { role: "user", content: metaPrompt }
-        ];
-        const body = {
-            messages,
-            model: "unity"
-        };
-        const seed = generateSeed();
         const token = encodeURIComponent(window.POLLINATIONS_TOKEN || "");
-        const apiUrl =
-            `https://text.pollinations.ai/openai?&model=unity&seed=${seed}&token=${token}`;
+        const apiUrl = `https://text.pollinations.ai/openai?model=unity${token ? `&token=${token}` : ""}`;
         try {
             const response = await window.pollinationsFetch(apiUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Accept: "application/json" },
-                body: JSON.stringify(body),
                 cache: "no-store",
+                body: JSON.stringify({
+                    model: "unity",
+                    messages: [{ role: "user", content: metaPrompt }]
+                })
             });
-
             const data = await response.json();
-            let generatedPrompt = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || data.response;
+            const generatedPrompt = data?.choices?.[0]?.message?.content;
             if (!generatedPrompt) throw new Error("No prompt returned from API");
-            if (generatedPrompt.length > 100) generatedPrompt = generatedPrompt.substring(0, 100);
             return generatedPrompt;
         } catch (err) {
             console.error("Failed to fetch dynamic prompt:", err);
