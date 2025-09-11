@@ -570,12 +570,6 @@ document.addEventListener("DOMContentLoaded", () => {
         chatInput.style.height = "auto";
         chatInput.style.height = chatInput.scrollHeight + "px";
     });
-    chatInput.addEventListener("keydown", e => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            handleSendMessage();
-        }
-    });
     sendButton.addEventListener("click", handleSendMessage);
     sendButton.disabled = chatInput.value.trim() === "";
     chatInput.dispatchEvent(new Event("input"));
