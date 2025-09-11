@@ -110,8 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function fetchPollinationsModels() {
         try {
-            const token = encodeURIComponent(window.POLLINATIONS_TOKEN || "");
-            const res = await window.pollinationsFetch(`https://text.pollinations.ai/models?token=${token}`, {
+            const res = await window.pollinationsFetch("https://text.pollinations.ai/models", {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
                 cache: "no-store"
