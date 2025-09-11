@@ -489,8 +489,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const modelSelectEl = document.getElementById("model-select");
-        const model = modelSelectEl?.value || currentSession.model;
-        if (!model) throw new Error("No model selected");
+        const model = modelSelectEl?.value || currentSession.model || Storage.getDefaultModel();
+        if (!model) {
+            loadingDiv.textContent = "Error: No model selected.";
+            setTimeout(() => loadingDiv.remove(), 3000);
+            const btn = window._chatInternals?.sendButton || document.getElementById("send-button");
+            const input = window._chatInternals?.chatInput || document.getElementById("chat-input");
+            if (btn) btn.disabled = false;
+            if (input) input.disabled = false;
+            showToast("Please select a model before sending a message.");
+            if (callback) callback();
+            return;
+        }
         const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=${encodeURIComponent(model)}`;
 
         try {
