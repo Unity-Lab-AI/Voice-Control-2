@@ -608,7 +608,8 @@ document.addEventListener("DOMContentLoaded", () => {
         imagePrompt = imagePrompt.slice(0, 100) + ", photographic";
         const updateImage = () => {
             const seed = randomSeed();
-            voiceChatImage.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=512&height=512&seed=${seed}&nolog=true&referrer=unityailab.com`;
+            const token = encodeURIComponent(getPollinationsToken());
+            voiceChatImage.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=512&height=512&seed=${seed}&nolog=true&referrer=unityailab.com&token=${token}`;
         };
         updateImage();
         slideshowInterval = setInterval(updateImage, 10000);

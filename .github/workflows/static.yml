@@ -29,8 +29,10 @@ jobs:
         if: ${{ secrets.POLLINATIONS_TOKEN != '' }}
         run: |
           set -e
-          if ! grep -qi "window.POLLINATIONS_TOKEN" index.html; then
-            INJ="<script>window.POLLINATIONS_TOKEN='${{ secrets.POLLINATIONS_TOKEN }}';</script>"
+          INJ="<script>window.POLLINATIONS_TOKEN='${{ secrets.POLLINATIONS_TOKEN }}';</script>"
+          if grep -qi "window.POLLINATIONS_TOKEN" index.html; then
+            sed -i "s|<script>window.POLLINATIONS_TOKEN.*</script>|$INJ|I" index.html
+          else
             awk -v inj="$INJ" 'BEGIN{IGNORECASE=1} /<\/head>/{print inj} {print}' index.html > index.html.tmp
             mv index.html.tmp index.html
           fi
