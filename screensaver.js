@@ -7,6 +7,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const saveButton = document.getElementById("screensaver-save");
     const copyButton = document.getElementById("screensaver-copy");
     const hideButton = document.getElementById("screensaver-hide");
+    const thumbnailCarousel = document.querySelector('.screensaver-thumbnail-carousel');
+    const thumbnailContainer = document.getElementById('screensaver-thumbnails');
+    const thumbLeft = document.getElementById('screensaver-thumb-left');
+    const thumbRight = document.getElementById('screensaver-thumb-right');
     const screensaverImage1 = document.getElementById("screensaver-image1");
     const screensaverImage2 = document.getElementById("screensaver-image2");
     const promptInput = document.getElementById("screensaver-prompt");
@@ -299,7 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Current promptHistory length:", promptHistory.length, "Prompts:", promptHistory);
     }
 
-    function updateThumbnailHistory() {
+    function updateThumbnailHistory(scrollToEnd = true) {
         const thumbnailContainer = document.getElementById('screensaver-thumbnails');
         if (!thumbnailContainer) {
             console.error("Thumbnail container not found in DOM.");
@@ -333,8 +337,13 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log(`Added thumbnail ${index + 1}/${imageHistory.length} to DOM:`, thumb.src);
         });
 
-        // keep the view scrolled to the latest thumbnail
-        thumbnailContainer.scrollTo({ left: thumbnailContainer.scrollWidth, behavior: 'smooth' });
+        if (scrollToEnd) {
+            // keep the view scrolled to the latest thumbnail
+            thumbnailContainer.scrollTo({ left: thumbnailContainer.scrollWidth, behavior: 'smooth' });
+        } else {
+            const selected = thumbnailContainer.querySelector('img.thumbnail.selected');
+            if (selected) selected.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
         console.log("Updated thumbnail gallery with", imageHistory.length, "images. DOM count:", thumbnailContainer.children.length);
 
         const offsetWidth = thumbnailContainer.offsetWidth;
@@ -353,13 +362,13 @@ document.addEventListener("DOMContentLoaded", () => {
         nextImgElement.onload = () => {
             nextImgElement.style.opacity = '1';
             currentImage = nextImage;
-            updateThumbnailHistory();
+            updateThumbnailHistory(false);
         };
         nextImgElement.onerror = () => {
             nextImgElement.src = "https://via.placeholder.com/512?text=Image+Failed";
             nextImgElement.style.opacity = '1';
             currentImage = nextImage;
-            updateThumbnailHistory();
+            updateThumbnailHistory(false);
         };
         nextImgElement.src = imageUrl;
         nextImgElement.alt = "Screensaver Image";
@@ -367,7 +376,7 @@ document.addEventListener("DOMContentLoaded", () => {
             nextImgElement.style.opacity = '1';
             currentImgElement.style.opacity = '0';
             currentImage = nextImage;
-            updateThumbnailHistory();
+            updateThumbnailHistory(false);
         }
         // restart the timer so new generations resume after viewing a historical image
         setOrResetImageInterval();
@@ -497,7 +506,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function toggleControls() {
         controlsHidden = !controlsHidden;
         const controls = document.querySelector('.screensaver-controls');
-        const thumbnails = document.querySelector('.screensaver-thumbnails');
+        const thumbnails = thumbnailCarousel;
         if (controlsHidden) {
             controls.classList.add('hidden-panel');
             thumbnails.classList.add('hidden-panel');
@@ -689,12 +698,29 @@ document.addEventListener("DOMContentLoaded", () => {
         else window.showToast("Start the screensaver first!");
     });
 
+    if (thumbLeft && thumbRight && thumbnailContainer) {
+        thumbLeft.addEventListener('click', (e) => {
+            e.stopPropagation();
+            thumbnailContainer.scrollBy({ left: -thumbnailContainer.clientWidth / 2, behavior: 'smooth' });
+        });
+        thumbRight.addEventListener('click', (e) => {
+            e.stopPropagation();
+            thumbnailContainer.scrollBy({ left: thumbnailContainer.clientWidth / 2, behavior: 'smooth' });
+        });
+        thumbnailContainer.addEventListener('wheel', (e) => {
+            if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                e.preventDefault();
+                thumbnailContainer.scrollBy({ left: e.deltaY, behavior: 'smooth' });
+            }
+        }, { passive: false });
+    }
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && screensaverActive && controlsHidden) {
             e.stopPropagation();
             e.preventDefault();
             const controls = document.querySelector('.screensaver-controls');
-            const thumbnails = document.querySelector('.screensaver-thumbnails');
+            const thumbnails = thumbnailCarousel;
             controls.classList.add('hidden-panel');
             thumbnails.classList.add('hidden-panel');
         }
