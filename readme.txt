@@ -1,10 +1,8 @@
 ## Environment Setup
 
-Create a `.env` file in the project root containing your Pollinations token:
-
-POLLINATIONS_TOKEN=your_token_here
-
-The token is automatically loaded by `env-loader.js` for use in the static site.
+Configure a `POLLINATIONS_TOKEN` secret in the repository settings.
+The deployment injects this value into `window.POLLINATIONS_TOKEN`,
+so the static site can access it directly without local files or storage.
 
 Here's a comprehensive breakdown of your web app's functionality based on the provided files:
 
