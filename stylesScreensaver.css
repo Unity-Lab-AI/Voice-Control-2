@@ -38,10 +38,11 @@
   flex-direction: row;
   gap: 10px;
   overflow-x: auto;
-  width: 90%;
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1290px;
   padding: 10px;
   border-radius: 12px;
+  background: rgba(0, 0, 0, 0.7);
   transition: opacity 0.3s ease;
   scrollbar-width: thin;
   white-space: nowrap;
@@ -85,6 +86,12 @@
   display: inline-block;
   opacity: 1;
   position: static;
+}
+
+.screensaver-thumbnails img.thumbnail.placeholder {
+  opacity: 0.3;
+  border: 3px dashed #555;
+  pointer-events: none;
 }
 
 .screensaver-controls {
