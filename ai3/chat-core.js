@@ -7,10 +7,25 @@
 // comments is to give a high level understanding of how pieces fit together.
 // ============================================================================
 
+// Resolve the Pollinations access token from a variety of sources so that
+// environments without bundlers or server side injection can still provide it.
 const POLLINATIONS_TOKEN =
     (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
+    new URLSearchParams(window.location.search).get("token") ||
+    window.localStorage?.getItem("pollinationsToken") ||
     window.POLLINATIONS_TOKEN ||
     "";
+
+// Persist and expose the token if one was found so subsequent page loads and
+// other modules can reuse it.
+if (POLLINATIONS_TOKEN) {
+    try {
+        window.localStorage.setItem("pollinationsToken", POLLINATIONS_TOKEN);
+    } catch (e) {
+        console.warn("Unable to persist Pollinations token:", e);
+    }
+    window.POLLINATIONS_TOKEN = POLLINATIONS_TOKEN;
+}
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -612,6 +627,7 @@ document.addEventListener("DOMContentLoaded", () => {
      * @returns {string} Extracted text content.
      */
     function extractAIContent(response) {
+        if (response.error) return `Error: ${response.error}`;
         if (response.choices?.[0]?.message?.content) return response.choices[0].message.content;
         if (response.choices?.[0]?.text) return response.choices[0].text;
         if (response.response) return response.response;
@@ -695,7 +711,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const seed = randomSeed();
         const body = { messages, model: selectedModel, nonce };
         const params = new URLSearchParams();
-        params.set("token", POLLINATIONS_TOKEN || "");
+        if (POLLINATIONS_TOKEN) params.set("token", POLLINATIONS_TOKEN);
         params.set("model", selectedModel);
         params.set("seed", seed);
         const apiUrl = `https://text.pollinations.ai/openai?${params.toString()}`;
