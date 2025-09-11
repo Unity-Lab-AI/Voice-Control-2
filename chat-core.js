@@ -469,23 +469,25 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        let prompt = window.aiInstructions;
+        const messages = [];
+        if (window.aiInstructions) {
+            messages.push({ role: "system", content: window.aiInstructions });
+        }
         const memories = Memory.getMemories();
         if (memories?.length) {
-            prompt += `\nRelevant memory:\n${memories.join("\n")}\nUse it in your response.`;
+            messages.push({ role: "system", content: `Relevant memory:\n${memories.join("\n")}\nUse it in your response.` });
         }
 
         const HISTORY = 10;
         const end = currentSession.messages.length - 1;
         const start = Math.max(0, end - HISTORY);
         for (let i = start; i < end; i++) {
-            const m = currentSession.messages[i];
-            prompt += `\n${m.role === "ai" ? "AI" : "User"}: ${m.content}`;
+            messages.push(currentSession.messages[i]);
         }
 
         const lastUser = overrideContent || currentSession.messages[end]?.content;
         if (lastUser) {
-            prompt += `\nUser: ${lastUser}`;
+            messages.push({ role: "user", content: lastUser });
         }
 
         const modelSelectEl = document.getElementById("model-select");
@@ -501,17 +503,16 @@ document.addEventListener("DOMContentLoaded", () => {
             if (callback) callback();
             return;
         }
-        const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=${encodeURIComponent(model)}`;
 
         try {
-            const res = await window.pollinationsFetch(apiUrl, {
-                method: "GET",
-                headers: { "Accept": "text/plain" }
+            const res = await window.pollinationsFetch("https://text.pollinations.ai/openai", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Accept: "application/json" },
+                body: JSON.stringify({ model, messages })
             }, { timeoutMs: 45000 });
-            const aiContentRaw = await res.text();
-
+            const data = await res.json();
             loadingDiv.remove();
-
+            const aiContentRaw = data?.choices?.[0]?.message?.content || "";
             let aiContent = aiContentRaw;
 
             const memRegex = /\[memory\]([\s\S]*?)\[\/memory\]/gi;
