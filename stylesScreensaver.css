@@ -21,30 +21,44 @@
   display: block;
 }
 
-.screensaver-thumbnail-carousel {
+
+.screensaver-thumbnails-wrapper {
   position: fixed;
   bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  width: 90%;
-  max-width: 1200px;
+  gap: 10px;
   z-index: 2;
-  gap: 8px;
 }
 
 .screensaver-thumbnails {
-  flex: 1;
   display: flex;
   flex-direction: row;
   gap: 10px;
   overflow-x: auto;
+  width: 90%;
+  max-width: 1200px;
   padding: 10px;
   border-radius: 12px;
   transition: opacity 0.3s ease;
   scrollbar-width: thin;
   white-space: nowrap;
+}
+
+.thumb-nav {
+  background: rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.thumb-nav:hover {
+  background: rgba(0, 0, 0, 0.8);
 }
 
 .screensaver-thumbnails::-webkit-scrollbar {
@@ -71,26 +85,6 @@
   display: inline-block;
   opacity: 1;
   position: static;
-  scroll-snap-align: center;
-}
-
-.thumb-nav {
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  padding: 0 12px;
-  height: 80px;
-  border-radius: 8px;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-}
-
-.thumb-nav:hover {
-  background: rgba(0, 0, 0, 0.8);
 }
 
 .screensaver-controls {
@@ -112,12 +106,12 @@
 }
 
 .screensaver:not(:hover) .screensaver-controls,
-.screensaver:not(:hover) .screensaver-thumbnail-carousel {
+.screensaver:not(:hover) .screensaver-thumbnails-wrapper {
   opacity: 0.5;
 }
 
 .screensaver-controls.hidden-panel,
-.screensaver-thumbnail-carousel.hidden-panel {
+.screensaver-thumbnails-wrapper.hidden-panel {
   opacity: 0;
   pointer-events: none;
   transform: translateX(-50%) translateY(20px);
