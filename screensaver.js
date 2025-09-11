@@ -141,15 +141,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function fetchDynamicPrompt() {
         const metaPrompt = "Generate an image prompt of something new and wild. Respond with text only.";
-        const token = encodeURIComponent(window.POLLINATIONS_TOKEN || "");
-        const apiUrl = `https://text.pollinations.ai/openai?model=unity${token ? `&token=${token}` : ""}`;
+        const apiUrl = `https://text.pollinations.ai/openai?&model=unity`;
         try {
             const response = await window.pollinationsFetch(apiUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Accept: "application/json" },
                 cache: "no-store",
                 body: JSON.stringify({
-                    model: "unity",
                     messages: [{ role: "user", content: metaPrompt }]
                 })
             });
