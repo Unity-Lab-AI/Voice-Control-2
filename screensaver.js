@@ -194,14 +194,19 @@ document.addEventListener("DOMContentLoaded", () => {
         const metaPrompt = "Generate exactly one short-125-character, new, fucked up and explicit wild image prompt as text only of outlandish and psychologically thrilling image. i.e. demented, evil, psychotic art.";
         const textModel = document.getElementById("model-select")?.value;
         const seed = generateSeed();
-        const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(metaPrompt)}?seed=${seed}&safe=false${textModel ? `&model=${encodeURIComponent(textModel)}` : ""}`;
         try {
-            const response = await window.pollinationsFetch(apiUrl, {
-                method: "GET",
-                headers: { Accept: "text/plain" },
-                cache: "no-store"
+            const response = await window.pollinationsFetch("https://text.pollinations.ai/openai", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Accept: "application/json" },
+                cache: "no-store",
+                body: JSON.stringify({
+                    model: textModel || "openai",
+                    seed,
+                    messages: [{ role: "user", content: metaPrompt }]
+                })
             });
-            const generatedPrompt = await response.text();
+            const data = await response.json();
+            const generatedPrompt = data?.choices?.[0]?.message?.content?.trim();
             if (!generatedPrompt) throw new Error("No fucking prompt returned from API");
             return generatedPrompt;
         } catch (err) {

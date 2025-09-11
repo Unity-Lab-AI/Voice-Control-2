@@ -469,39 +469,50 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        let prompt = window.aiInstructions;
+        const messages = [];
+        if (window.aiInstructions) {
+            messages.push({ role: "system", content: window.aiInstructions });
+        }
         const memories = Memory.getMemories();
         if (memories?.length) {
-            prompt += `\nRelevant memory:\n${memories.join("\n")}\nUse it in your response.`;
+            messages.push({ role: "system", content: `Relevant memory:\n${memories.join("\n")}\nUse it in your response.` });
         }
 
         const HISTORY = 10;
         const end = currentSession.messages.length - 1;
         const start = Math.max(0, end - HISTORY);
         for (let i = start; i < end; i++) {
-            const m = currentSession.messages[i];
-            prompt += `\n${m.role === "ai" ? "AI" : "User"}: ${m.content}`;
+            messages.push(currentSession.messages[i]);
         }
 
         const lastUser = overrideContent || currentSession.messages[end]?.content;
         if (lastUser) {
-            prompt += `\nUser: ${lastUser}`;
+            messages.push({ role: "user", content: lastUser });
         }
 
         const modelSelectEl = document.getElementById("model-select");
-        const model = modelSelectEl?.value || currentSession.model;
-        if (!model) throw new Error("No model selected");
-        const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=${encodeURIComponent(model)}`;
+        const model = modelSelectEl?.value || currentSession.model || Storage.getDefaultModel();
+        if (!model) {
+            loadingDiv.textContent = "Error: No model selected.";
+            setTimeout(() => loadingDiv.remove(), 3000);
+            const btn = window._chatInternals?.sendButton || document.getElementById("send-button");
+            const input = window._chatInternals?.chatInput || document.getElementById("chat-input");
+            if (btn) btn.disabled = false;
+            if (input) input.disabled = false;
+            showToast("Please select a model before sending a message.");
+            if (callback) callback();
+            return;
+        }
 
         try {
-            const res = await window.pollinationsFetch(apiUrl, {
-                method: "GET",
-                headers: { "Accept": "text/plain" }
+            const res = await window.pollinationsFetch("https://text.pollinations.ai/openai", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Accept: "application/json" },
+                body: JSON.stringify({ model, messages })
             }, { timeoutMs: 45000 });
-            const aiContentRaw = await res.text();
-
+            const data = await res.json();
             loadingDiv.remove();
-
+            const aiContentRaw = data?.choices?.[0]?.message?.content || "";
             let aiContent = aiContentRaw;
 
             const memRegex = /\[memory\]([\s\S]*?)\[\/memory\]/gi;
