@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function fetchDynamicPrompt() {
-        const metaPrompt = "Generate an image prompt of something new and wild. Respond with text only.";
+        const metaPrompt = "Generate unique, new, fucked up and explicit wild image prompts as text only of outlandish and psychologically thrilling images. ie demented, evil, psychotic art, under 125 characters.";
         const token = encodeURIComponent(window.POLLINATIONS_TOKEN || "");
         const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(metaPrompt)}?model=unity${token ? `&token=${token}` : ""}`;
         try {
@@ -695,4 +695,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("Screensaver initialized with dynamic API prompts and streaming thumbnail gallery!");
 });
+
 
