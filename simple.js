@@ -286,12 +286,10 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         simpleSendBtn.addEventListener("click", handleSimpleSend);
 
-        // Send on Enter, allow newline with Shift+Enter
+        // Send on Enter; newline with Shift+Enter
         simpleInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                if (e.shiftKey) return; // allow newline
+            if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                // Call the same handler used by the send button
                 handleSimpleSend();
             }
         });
