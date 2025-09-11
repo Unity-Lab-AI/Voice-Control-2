@@ -21,6 +21,9 @@ window.pollinationsFetch = async function (url, options = {}, retries = 6, delay
             if (token && !urlObj.searchParams.has("token")) {
                 urlObj.searchParams.set("token", token);
             }
+            if (!urlObj.searchParams.has("referrer")) {
+                urlObj.searchParams.set("referrer", "unityailab.com");
+            }
         }
         url = urlObj.toString();
     } catch (err) {
