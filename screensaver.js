@@ -689,6 +689,17 @@ document.addEventListener("DOMContentLoaded", () => {
         else window.showToast("Start the screensaver first!");
     });
 
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && screensaverActive && controlsHidden) {
+            e.stopPropagation();
+            e.preventDefault();
+            const controls = document.querySelector('.screensaver-controls');
+            const thumbnails = document.querySelector('.screensaver-thumbnails');
+            controls.classList.add('hidden-panel');
+            thumbnails.classList.add('hidden-panel');
+        }
+    });
+
     window.showToast = function(message, duration = 3000) {
         let toast = document.getElementById("toast-notification");
         if (!toast) {
