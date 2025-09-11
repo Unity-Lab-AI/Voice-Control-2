@@ -149,9 +149,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const body = {
             messages,
             model: "unity",
-            nonce: Date.now().toString() + Math.random().toString(36).substring(2)
+            nonce: seed
         };
-        const apiUrl = `https://text.pollinations.ai/openai?seed=${seed}`;
+        const apiUrl = `https://text.pollinations.ai/openai?model=unity&seed=${seed}`;
         console.log("Sending API request for new prompt:", JSON.stringify(body));
         try {
             const response = await window.pollinationsFetch(apiUrl, {
