@@ -147,14 +147,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
-            if (!hasValidModel) {
-                const fallbackOpt = document.createElement("option");
-                fallbackOpt.value = "unity";
-                fallbackOpt.textContent = "unity";
-                modelSelect.appendChild(fallbackOpt);
-                modelSelect.value = "unity";
-            }
-
             const currentSession = Storage.getCurrentSession();
             if (currentSession && currentSession.model) {
                 const modelExists = Array.from(modelSelect.options).some(option => option.value === currentSession.model);
@@ -169,23 +161,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     modelSelect.value = currentSession.model;
                     console.warn(`Model ${currentSession.model} not found in fetched list. Added as unavailable option.`);
                 }
-            } else {
-                const unityOptionExists = Array.from(modelSelect.options).some(option => option.value === "unity");
-                if (unityOptionExists) {
-                    modelSelect.value = "unity";
+            }
+
+            if (!modelSelect.value && modelSelect.options.length > 0) {
+                const firstModel = modelSelect.options[0].value;
+                modelSelect.value = firstModel;
+                if (currentSession) {
+                    Storage.setSessionModel(currentSession.id, firstModel);
                 }
             }
         } catch (err) {
             console.error("Failed to fetch text models:", err);
             modelSelect.innerHTML = "";
-            const fallbackOpt = document.createElement("option");
-            fallbackOpt.value = "unity";
-            fallbackOpt.textContent = "unity";
-            modelSelect.appendChild(fallbackOpt);
-            modelSelect.value = "unity";
-
             const currentSession = Storage.getCurrentSession();
-            if (currentSession && currentSession.model && currentSession.model !== "unity") {
+            if (currentSession && currentSession.model) {
                 const sessOpt = document.createElement("option");
                 sessOpt.value = currentSession.model;
                 sessOpt.textContent = `${currentSession.model} (From Session - May Be Unavailable)`;
@@ -200,7 +189,11 @@ document.addEventListener("DOMContentLoaded", () => {
         Storage.setCurrentSessionId(newSess.id);
         const chatBox = document.getElementById("chat-box");
         if (chatBox) chatBox.innerHTML = "";
-        if (modelSelect) modelSelect.value = newSess.model;
+        if (modelSelect) {
+            const selected = newSess.model || modelSelect.options[0]?.value || "";
+            modelSelect.value = selected;
+            Storage.setSessionModel(newSess.id, selected);
+        }
         Storage.renderSessions();
         window.showToast("New chat session created");
     });

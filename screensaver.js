@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
         prompt: '',
         timer: 30,
         aspect: 'widescreen',
-        model: 'flux',
+        model: '',
         enhance: true,
         priv: true,
         transitionDuration: 1
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 settings.prompt = '';
                 settings.timer = s.timer || 30;
                 settings.aspect = s.aspect || 'widescreen';
-                settings.model = s.model || 'flux';
+                settings.model = s.model || '';
                 settings.enhance = s.enhance !== undefined ? s.enhance : true;
                 settings.priv = s.priv !== undefined ? s.priv : true;
                 settings.transitionDuration = s.transitionDuration || 1;
@@ -85,7 +85,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 promptInput.value = settings.prompt;
                 timerInput.value = settings.timer;
                 aspectSelect.value = settings.aspect;
-                modelSelect.value = settings.model;
                 enhanceCheckbox.checked = settings.enhance;
                 privateCheckbox.checked = settings.priv;
                 transitionDurationInput.value = settings.transitionDuration;
@@ -117,6 +116,35 @@ document.addEventListener("DOMContentLoaded", () => {
     loadScreensaverSettings();
     loadImageHistory();
 
+    async function fetchImageModels() {
+        try {
+            const res = await window.pollinationsFetch("https://image.pollinations.ai/models", {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+                cache: "no-store"
+            });
+            const models = await res.json();
+            modelSelect.innerHTML = "";
+            if (Array.isArray(models) && models.length > 0) {
+                models.forEach(name => {
+                    const opt = document.createElement("option");
+                    opt.value = name;
+                    opt.textContent = name;
+                    modelSelect.appendChild(opt);
+                });
+                if (settings.model && models.includes(settings.model)) {
+                    modelSelect.value = settings.model;
+                } else {
+                    settings.model = models[0];
+                    modelSelect.value = settings.model;
+                }
+            }
+        } catch (err) {
+            console.error("Failed to fetch image models:", err);
+        }
+    }
+    fetchImageModels();
+
     function generateSeed() {
         return Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
     }
@@ -141,7 +169,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function fetchDynamicPrompt() {
         const metaPrompt = "Generate unique, new, fucked up and explicit wild image prompts as text only of outlandish and psychologically thrilling images. ie demented, evil, psychotic art, under 125 characters.";
-        const apiUrl = `https://text.pollinations.ai/openai?model=unity&seed=${seed}&token=${token}&safe=false`;
+        const textModel = document.getElementById("model-select")?.value;
+        const seed = generateSeed();
+        const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(metaPrompt)}?seed=${seed}&safe=false${textModel ? `&model=${encodeURIComponent(textModel)}` : ""}`;
         try {
             const response = await window.pollinationsFetch(apiUrl, {
                 method: "GET",
@@ -198,7 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const { width, height } = getDimensions(settings.aspect);
         const seed = generateSeed();
-        const model = settings.model || "flux";
+        const model = settings.model || modelSelect.value;
         const enhance = settings.enhance;
         const priv = settings.priv;
 
