@@ -602,30 +602,6 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("Click detected on image-button-container, preventing propagation");
         }
     }, true);
-    const sendButton = document.getElementById("send-button");
-    function handleSendMessage() {
-        const message = chatInput.value.trim();
-        if (message === "") return;
-        window.addNewMessage({ role: "user", content: message });
-        chatInput.value = "";
-        chatInput.style.height = "auto";
-        window.sendToPollinations(() => {
-            sendButton.disabled = false;
-            chatInput.disabled = false;
-            chatInput.focus();
-        });
-        sendButton.disabled = true;
-        chatInput.disabled = true;
-    }
-    chatInput.addEventListener("input", () => {
-        sendButton.disabled = chatInput.value.trim() === "";
-        chatInput.style.height = "auto";
-        chatInput.style.height = chatInput.scrollHeight + "px";
-    });
-    sendButton.addEventListener("click", () => {
-        handleSendMessage();
-    });
-    sendButton.disabled = chatInput.value.trim() === "";
     const initialSession = Storage.getCurrentSession();
     if (initialSession.messages && initialSession.messages.length > 0) {
         renderStoredMessages(initialSession.messages);

@@ -572,16 +572,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     sendButton.addEventListener("click", handleSendMessage);
 
-    // Send on Enter, allow newline with Shift+Enter
+    // Send on Enter; newline with Shift+Enter
     chatInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            if (e.shiftKey) return; // allow newline
-            e.preventDefault();
-            // Directly invoke the send handler so the message is processed
-            // even if the button state would block programmatic clicks.
-            handleSendMessage();
+        // IME safety and repeats
+        if (e.isComposing || e.key !== 'Enter') return;
+
+        if (e.shiftKey) {
+            // allow newline
+            return;
         }
-    });
+
+        e.preventDefault();
+        // Do not rely on button state—call the handler directly.
+        handleSendMessage();
+    }, { once: false });
     sendButton.disabled = chatInput.value.trim() === "";
     chatInput.dispatchEvent(new Event("input"));
     const initialSession = Storage.getCurrentSession();
