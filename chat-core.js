@@ -78,26 +78,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let voiceInputBtn = null;
     let slideshowInterval = null;
 
-    async function sendUnityCommand(command, originalMessage = "") {
-        try {
-            const res = await window.pollinationsFetch("https://text.pollinations.ai/unity", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Accept: "application/json" },
-                body: JSON.stringify({ command, message: originalMessage, build: true }),
-                cache: "no-store",
-            });
-            const data = await res.json();
-            const reply = data.reply || data.response || "Command executed.";
-            window.addNewMessage({ role: "ai", content: reply });
-            if (autoSpeakEnabled) speakMessage(reply);
-        } catch (err) {
-            console.error("Unity command failed", err);
-            const errMsg = "Failed to execute Unity command.";
-            window.addNewMessage({ role: "ai", content: errMsg });
-            if (autoSpeakEnabled) speakMessage(errMsg);
-        }
-    }
-
     function processAIInstructions(text) {
         return text.replace(/\[(CLICK|SET|UNITY):([^\]]+)\]/gi, (match, action, params) => {
             const upper = action.toUpperCase();
@@ -111,8 +91,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     el.value = value?.trim() ?? "";
                     el.dispatchEvent(new Event('change'));
                 }
-            } else if (upper === "UNITY") {
-                sendUnityCommand(params.trim(), text);
             }
             return '';
         }).trim();
@@ -605,9 +583,9 @@ document.addEventListener("DOMContentLoaded", () => {
             imagePatterns.some(p => p.pattern.test(lastUserMsg))
         );
         const selectedModel = modelSelect.value || currentSession.model || "unity";
-        const nonce = Date.now().toString() + Math.random().toString(36).substring(2);
-        const body = { messages, model: selectedModel, nonce };
-        const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(selectedModel)}`;
+        const seed = Date.now().toString() + Math.random().toString(36).substring(2);
+        const body = { messages, model: selectedModel, nonce: seed };
+        const apiUrl = `https://text.pollinations.ai/openai?model=${encodeURIComponent(selectedModel)}&seed=${seed}`;
         console.log("Sending API request with payload:", JSON.stringify(body));
         window.pollinationsFetch(apiUrl, {
             method: "POST",
@@ -834,7 +812,6 @@ document.addEventListener("DOMContentLoaded", () => {
         toggleSpeechRecognition,
         processAIInstructions,
         handleVoiceCommand,
-        sendUnityCommand,
         findElement,
         executeCommand,
         showToast,
