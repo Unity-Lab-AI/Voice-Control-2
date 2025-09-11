@@ -25,6 +25,18 @@ window.aiInstructionPromise = fetch("ai-instruct.txt")
         window.aiInstructions = "";
     });
 
+// Utility: allow Enter to send messages and Shift+Enter for new lines
+window.setupEnterToSend = function(textarea, sendCallback) {
+    if (!textarea || typeof sendCallback !== "function") return;
+    textarea.addEventListener("keydown", (e) => {
+        const isEnter = e.key === "Enter" || e.keyCode === 13;
+        if (isEnter && !e.shiftKey) {
+            e.preventDefault();
+            sendCallback();
+        }
+    });
+};
+
 document.addEventListener("DOMContentLoaded", () => {
 
     const chatBox = document.getElementById("chat-box");
