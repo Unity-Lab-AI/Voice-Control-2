@@ -28,13 +28,15 @@ window.aiInstructionPromise = fetch("ai-instruct.txt")
 // Utility: allow Enter to send messages and Shift+Enter for new lines
 window.setupEnterToSend = function(textarea, sendCallback) {
     if (!textarea || typeof sendCallback !== "function") return;
-    textarea.addEventListener("keydown", (e) => {
-        const isEnter = e.key === "Enter" || e.keyCode === 13;
-        if (isEnter && !e.shiftKey) {
+    const handler = (e) => {
+        const key = e.key || e.keyCode;
+        const isEnter = key === "Enter" || key === 13;
+        if (isEnter && !e.shiftKey && !e.isComposing && !e.repeat) {
             e.preventDefault();
             sendCallback();
         }
-    });
+    };
+    textarea.addEventListener("keydown", handler);
 };
 
 document.addEventListener("DOMContentLoaded", () => {

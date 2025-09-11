@@ -148,20 +148,26 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const currentSession = Storage.getCurrentSession();
-            const preferredModel = currentSession?.model || Storage.getDefaultModel();
-            if (preferredModel) {
-                const exists = Array.from(modelSelect.options).some(option => option.value === preferredModel);
-                if (exists) {
-                    modelSelect.value = preferredModel;
+            let preferredModel = currentSession?.model || Storage.getDefaultModel();
+            if (!preferredModel || typeof preferredModel !== "string" || preferredModel.trim() === "") {
+                preferredModel = "unity";
+                if (currentSession) {
+                    Storage.setSessionModel(currentSession.id, preferredModel);
                 } else {
-                    const tempOpt = document.createElement("option");
-                    tempOpt.value = preferredModel;
-                    tempOpt.textContent = `${preferredModel} (Previously Selected - May Be Unavailable)`;
-                    tempOpt.title = "This model may no longer be available";
-                    modelSelect.appendChild(tempOpt);
-                    modelSelect.value = preferredModel;
-                    console.warn(`Model ${preferredModel} not found in fetched list. Added as unavailable option.`);
+                    Storage.setDefaultModel(preferredModel);
                 }
+            }
+            const exists = Array.from(modelSelect.options).some(option => option.value === preferredModel);
+            if (exists) {
+                modelSelect.value = preferredModel;
+            } else {
+                const tempOpt = document.createElement("option");
+                tempOpt.value = preferredModel;
+                tempOpt.textContent = `${preferredModel} (Previously Selected - May Be Unavailable)`;
+                tempOpt.title = "This model may no longer be available";
+                modelSelect.appendChild(tempOpt);
+                modelSelect.value = preferredModel;
+                console.warn(`Model ${preferredModel} not found in fetched list. Added as unavailable option.`);
             }
 
             if (!modelSelect.value && modelSelect.options.length > 0) {

@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getDefaultModel() {
     let model = localStorage.getItem("defaultModelPreference");
-    if (!model) {
+    if (!model || typeof model !== "string" || model.trim() === "") {
       model = "unity";
       localStorage.setItem("defaultModelPreference", model);
     }
@@ -53,8 +53,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function setDefaultModel(modelName) {
-    localStorage.setItem("defaultModelPreference", modelName);
-    console.log("Default model preference set to:", modelName);
+    if (typeof modelName === "string" && modelName.trim() !== "") {
+      localStorage.setItem("defaultModelPreference", modelName);
+      console.log("Default model preference set to:", modelName);
+    }
   }
 
   function createSession(name) {
