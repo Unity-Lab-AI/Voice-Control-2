@@ -486,21 +486,23 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBox.appendChild(loadingDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        const messages = [{ role: "system", content: window.memoryInstructions }];
+        const messages = [{ role: "user", content: window.memoryInstructions }];
         const memories = Memory.getMemories();
         if (memories?.length) {
             messages.push({ role: "user", content: `Relevant memory:\n${memories.join("\n")}\nUse it in your response.` });
         }
 
         const HISTORY = 10;
-        const start = Math.max(0, currentSession.messages.length - HISTORY);
-        for (let i = start; i < currentSession.messages.length; i++) {
+        const end = currentSession.messages.length - 1;
+        const start = Math.max(0, end - HISTORY);
+        for (let i = start; i < end; i++) {
             const m = currentSession.messages[i];
             messages.push({ role: m.role === "ai" ? "assistant" : m.role, content: m.content });
         }
 
-        if (overrideContent && messages[messages.length - 1].content !== overrideContent) {
-            messages.push({ role: "user", content: overrideContent });
+        const lastUser = overrideContent || currentSession.messages[end]?.content;
+        if (lastUser) {
+            messages.push({ role: "user", content: lastUser });
         }
 
         const model = (document.getElementById("model-select")?.value) || currentSession.model || "unity";
