@@ -3,7 +3,10 @@ async function pollinationsFetch(url, options = {}, { timeoutMs = 45000 } = {}) 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(new DOMException('timeout', 'AbortError')), timeoutMs);
     try {
-        const res = await fetch(url, { ...options, signal: controller.signal, cache: 'no-store' });
+        const res = await fetch(
+            url,
+            { ...options, signal: controller.signal, cache: 'no-store' }
+        );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res;
     } finally {

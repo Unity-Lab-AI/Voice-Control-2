@@ -571,6 +571,14 @@ document.addEventListener("DOMContentLoaded", () => {
         chatInput.style.height = chatInput.scrollHeight + "px";
     });
     sendButton.addEventListener("click", handleSendMessage);
+
+    // Send on Enter (newline with Shift+Enter)
+    chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    });
     sendButton.disabled = chatInput.value.trim() === "";
     chatInput.dispatchEvent(new Event("input"));
     const initialSession = Storage.getCurrentSession();
