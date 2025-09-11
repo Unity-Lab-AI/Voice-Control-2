@@ -577,8 +577,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.key === 'Enter') {
             if (e.shiftKey) return; // allow newline
             e.preventDefault();
-            // Trigger the same action as the send button
-            sendButton.click();
+            // Directly invoke the send handler so the message is processed
+            // even if the button state would block programmatic clicks.
+            handleSendMessage();
         }
     });
     sendButton.disabled = chatInput.value.trim() === "";
