@@ -277,15 +277,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function addToHistory(imageUrl, prompt) {
-        if (imageHistory.includes(imageUrl)) {
-            console.log("Duplicate image URL detected, skipping:", imageUrl);
-            return;
-        }
-        imageHistory.unshift(imageUrl);
-        promptHistory.unshift(prompt);
+        // store newest images at the end of the list
+        imageHistory.push(imageUrl);
+        promptHistory.push(prompt);
         if (imageHistory.length > MAX_HISTORY) {
-            imageHistory.pop();
-            promptHistory.pop();
+            imageHistory.shift();
+            promptHistory.shift();
         }
         saveImageHistory();
         updateThumbnailHistory();
@@ -327,7 +324,8 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log(`Added thumbnail ${index + 1}/${imageHistory.length} to DOM:`, thumb.src);
         });
 
-        thumbnailContainer.scrollTo({ left: 0, behavior: 'smooth' });
+        // keep the view scrolled to the latest thumbnail
+        thumbnailContainer.scrollTo({ left: thumbnailContainer.scrollWidth, behavior: 'smooth' });
         console.log("Updated thumbnail gallery with", imageHistory.length, "images. DOM count:", thumbnailContainer.children.length);
 
         const offsetWidth = thumbnailContainer.offsetWidth;
@@ -362,6 +360,8 @@ document.addEventListener("DOMContentLoaded", () => {
             currentImage = nextImage;
             updateThumbnailHistory();
         }
+        // restart the timer so new generations resume after viewing a historical image
+        setOrResetImageInterval();
     }
 
     function setOrResetImageInterval() {
