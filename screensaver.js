@@ -689,22 +689,6 @@ document.addEventListener("DOMContentLoaded", () => {
         else window.showToast("Start the screensaver first!");
     });
 
-    document.addEventListener('keydown', (e) => {
-        if (!screensaverActive) return;
-        switch (e.key) {
-            case 'p': togglePause(); break;
-            case 's': saveImage(); break;
-            case 'c': copyImage(); break;
-            case 'f': toggleFullscreen(); break;
-            case 'Escape':
-                if (controlsHidden) toggleControls();
-                else stopScreensaver();
-                break;
-            case 'h': toggleControls(); break;
-            case 'r': toggleAutoPrompt(); break;
-        }
-    });
-
     window.showToast = function(message, duration = 3000) {
         let toast = document.getElementById("toast-notification");
         if (!toast) {

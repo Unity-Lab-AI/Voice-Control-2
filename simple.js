@@ -266,13 +266,6 @@ document.addEventListener("DOMContentLoaded", () => {
             simpleInput.style.height = simpleInput.scrollHeight + "px";
         });
 
-        simpleInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                simpleSendBtn.click();
-            }
-        });
-
         simpleSendBtn.addEventListener("click", () => {
             const message = simpleInput.value.trim();
             if (message === "") return;
