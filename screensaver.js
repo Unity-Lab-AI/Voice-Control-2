@@ -107,10 +107,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function loadImageHistory() {
-        imageHistory = [];
-        promptHistory = [];
+        try {
+            const rawImages = localStorage.getItem("imageHistory");
+            const rawPrompts = localStorage.getItem("promptHistory");
+            imageHistory = rawImages ? JSON.parse(rawImages) : [];
+            promptHistory = rawPrompts ? JSON.parse(rawPrompts) : [];
+            console.log("Loaded imageHistory from localStorage:", imageHistory);
+            console.log("Loaded promptHistory from localStorage:", promptHistory);
+        } catch (err) {
+            console.warn("Failed to load image history from localStorage:", err);
+            imageHistory = [];
+            promptHistory = [];
+        }
         updateThumbnailHistory();
-        console.log("Cleared imageHistory and promptHistory on startup.");
     }
 
     loadScreensaverSettings();
@@ -457,11 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
         clearInterval(promptInterval);
         promptInterval = null;
 
-        imageHistory = [];
-        promptHistory = [];
-        localStorage.removeItem("imageHistory");
-        localStorage.removeItem("promptHistory");
-        updateThumbnailHistory();
+        saveImageHistory();
 
         document.body.style.overflow = "";
         window.screensaverActive = false;
