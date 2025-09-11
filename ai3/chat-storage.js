@@ -229,7 +229,8 @@ document.addEventListener("DOMContentLoaded", () => {
      * @returns {HTMLDivElement} Wrapper element containing the image and buttons.
      */
     function createImageElement(url) {
-        const imageId = `voice-img-${Date.now()}`;
+        const uniqueSuffix = Math.random().toString(36).slice(2, 10);
+        const imageId = `voice-img-${Date.now()}-${uniqueSuffix}`;
         localStorage.setItem(`voiceImageId_${imageId}`, imageId);
         const imageContainer = document.createElement("div");
         imageContainer.className = "ai-image-container";
@@ -248,10 +249,13 @@ document.addEventListener("DOMContentLoaded", () => {
         img.dataset.imageUrl = url;
         img.dataset.imageId = imageId;
         img.crossOrigin = "anonymous";
+        const imgButtonContainer = document.createElement("div");
+        imgButtonContainer.className = "image-button-container";
+        imgButtonContainer.dataset.imageId = imageId;
         img.onload = () => {
             loadingDiv.remove();
             img.style.display = "block";
-            attachImageButtons(img, imageId);
+            attachImageButtons(img, imageId, imgButtonContainer);
         };
         img.onerror = () => {
             loadingDiv.innerHTML = "⚠️ Failed to load image";
@@ -260,9 +264,6 @@ document.addEventListener("DOMContentLoaded", () => {
             loadingDiv.style.alignItems = "center";
         };
         imageContainer.appendChild(img);
-        const imgButtonContainer = document.createElement("div");
-        imgButtonContainer.className = "image-button-container";
-        imgButtonContainer.dataset.imageId = imageId;
         imageContainer.appendChild(imgButtonContainer);
         return imageContainer;
     }
@@ -273,8 +274,8 @@ document.addEventListener("DOMContentLoaded", () => {
      * @param {HTMLImageElement} img - The target image element.
      * @param {string} imageId - Unique identifier used to track the image.
      */
-    function attachImageButtons(img, imageId) {
-        const imgButtonContainer = document.querySelector(`.image-button-container[data-image-id="${imageId}"]`);
+    function attachImageButtons(img, imageId, imgButtonContainer = null) {
+        imgButtonContainer = imgButtonContainer || document.querySelector(`.image-button-container[data-image-id="${imageId}"]`);
         if (!imgButtonContainer) {
             console.warn(`No image button container found for image ID: ${imageId}`);
             return;
@@ -763,7 +764,8 @@ document.addEventListener("DOMContentLoaded", () => {
          */
         function updateImage() {
             const seed = Math.floor(Math.random() * 1000000);
-            const imageId = `voice-img-${Date.now()}`;
+            const uniqueSuffix = Math.random().toString(36).slice(2, 10);
+            const imageId = `voice-img-${Date.now()}-${uniqueSuffix}`;
             localStorage.setItem(`voiceImageId_${imageId}`, imageId);
             const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=512&height=512&seed=${seed}&nolog=true`;
             voiceChatImage.src = imageUrl;

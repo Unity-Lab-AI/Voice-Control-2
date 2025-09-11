@@ -19,10 +19,37 @@ document.addEventListener("DOMContentLoaded", () => {
     const transitionDurationInput = document.getElementById("screensaver-transition-duration");
     const restartPromptButton = document.getElementById("screensaver-restart-prompt");
 
-    const POLLINATIONS_TOKEN =
+    let POLLINATIONS_TOKEN =
         (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
+        new URLSearchParams(window.location.search).get("token") ||
+        window.localStorage?.getItem("pollinationsToken") ||
         window.POLLINATIONS_TOKEN ||
         "";
+
+    async function ensurePollinationsToken() {
+        if (!POLLINATIONS_TOKEN) {
+            try {
+                const res = await fetch("./.env");
+                const text = await res.text();
+                const match = text.match(/POLLINATIONS_TOKEN\s*=\s*(.+)/);
+                if (match && match[1]) {
+                    POLLINATIONS_TOKEN = match[1].trim();
+                }
+            } catch (e) {
+                console.warn("Unable to load Pollinations token from .env:", e);
+            }
+        }
+        if (POLLINATIONS_TOKEN) {
+            try {
+                window.localStorage.setItem("pollinationsToken", POLLINATIONS_TOKEN);
+            } catch (e) {
+                console.warn("Unable to persist Pollinations token:", e);
+            }
+            window.POLLINATIONS_TOKEN = POLLINATIONS_TOKEN;
+        }
+    }
+
+    ensurePollinationsToken();
 
     // --- Screensaver runtime state --- //
     let screensaverActive = false;
@@ -173,8 +200,9 @@ document.addEventListener("DOMContentLoaded", () => {
             model: textModelSelect ? textModelSelect.value : "unity",
             nonce: Date.now().toString() + Math.random().toString(36).substring(2)
         };
+        await ensurePollinationsToken();
         const params = new URLSearchParams();
-        params.set("token", POLLINATIONS_TOKEN || "");
+        if (POLLINATIONS_TOKEN) params.set("token", POLLINATIONS_TOKEN);
         params.set("model", body.model);
         params.set("seed", seed);
         const apiUrl = `https://text.pollinations.ai/openai?${params.toString()}`;

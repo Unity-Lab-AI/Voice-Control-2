@@ -35,10 +35,38 @@ document.addEventListener("DOMContentLoaded", () => {
     const clearUserDataBtn = document.getElementById("clear-user-data-btn");
     const toggleSimpleModeBtn = document.getElementById("toggle-simple-mode");
 
-    const POLLINATIONS_TOKEN =
+    let POLLINATIONS_TOKEN =
         (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
+        new URLSearchParams(window.location.search).get("token") ||
+        window.localStorage?.getItem("pollinationsToken") ||
         window.POLLINATIONS_TOKEN ||
         "";
+
+    async function ensurePollinationsToken() {
+        if (!POLLINATIONS_TOKEN) {
+            try {
+                const res = await fetch("./.env");
+                const text = await res.text();
+                const match = text.match(/POLLINATIONS_TOKEN\s*=\s*(.+)/);
+                if (match && match[1]) {
+                    POLLINATIONS_TOKEN = match[1].trim();
+                }
+            } catch (e) {
+                console.warn("Unable to load Pollinations token from .env:", e);
+            }
+        }
+        if (POLLINATIONS_TOKEN) {
+            try {
+                window.localStorage.setItem("pollinationsToken", POLLINATIONS_TOKEN);
+            } catch (e) {
+                console.warn("Unable to persist Pollinations token:", e);
+            }
+            window.POLLINATIONS_TOKEN = POLLINATIONS_TOKEN;
+        }
+    }
+
+    // Ensure the token is ready before performing API calls.
+    const tokenReady = ensurePollinationsToken();
 
     // Create or reuse the <link> element responsible for injecting theme CSS
     // files. Themes are swapped by simply changing its href attribute.
@@ -130,7 +158,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // or returns invalid data.
     async function fetchPollinationsModels() {
         try {
-            const url = `https://text.pollinations.ai/models?token=${POLLINATIONS_TOKEN || ""}`;
+            const tokenParam = POLLINATIONS_TOKEN ? `?token=${POLLINATIONS_TOKEN}` : "";
+            const url = `https://text.pollinations.ai/models${tokenParam}`;
             const res = await fetch(url, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
@@ -219,7 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     // Kick off the initial model fetch when the UI loads.
-    fetchPollinationsModels();
+    tokenReady.then(fetchPollinationsModels);
 
     // Create a new chat session and reset the chat interface.
     newSessionBtn.addEventListener("click", () => {

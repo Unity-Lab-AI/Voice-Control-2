@@ -7,10 +7,40 @@
 // comments is to give a high level understanding of how pieces fit together.
 // ============================================================================
 
-const POLLINATIONS_TOKEN =
+// Resolve the Pollinations access token from a variety of sources so that
+// environments without bundlers or server side injection can still provide it.
+let POLLINATIONS_TOKEN =
     (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
+    new URLSearchParams(window.location.search).get("token") ||
+    window.localStorage?.getItem("pollinationsToken") ||
     window.POLLINATIONS_TOKEN ||
     "";
+
+async function ensurePollinationsToken() {
+    if (!POLLINATIONS_TOKEN) {
+        try {
+            const res = await fetch("./.env");
+            const text = await res.text();
+            const match = text.match(/POLLINATIONS_TOKEN\s*=\s*(.+)/);
+            if (match && match[1]) {
+                POLLINATIONS_TOKEN = match[1].trim();
+            }
+        } catch (e) {
+            console.warn("Unable to load Pollinations token from .env:", e);
+        }
+    }
+    if (POLLINATIONS_TOKEN) {
+        try {
+            window.localStorage.setItem("pollinationsToken", POLLINATIONS_TOKEN);
+        } catch (e) {
+            console.warn("Unable to persist Pollinations token:", e);
+        }
+        window.POLLINATIONS_TOKEN = POLLINATIONS_TOKEN;
+    }
+}
+
+// Kick off token resolution immediately.
+ensurePollinationsToken();
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -612,6 +642,7 @@ document.addEventListener("DOMContentLoaded", () => {
      * @returns {string} Extracted text content.
      */
     function extractAIContent(response) {
+        if (response.error) return `Error: ${response.error}`;
         if (response.choices?.[0]?.message?.content) return response.choices[0].message.content;
         if (response.choices?.[0]?.text) return response.choices[0].text;
         if (response.response) return response.response;
@@ -644,7 +675,7 @@ document.addEventListener("DOMContentLoaded", () => {
      * @param {string|null} [overrideContent=null] - If provided, replaces the
      *   last user message when sending to the API.
      */
-    window.sendToPollinations = (callback = null, overrideContent = null) => {
+    window.sendToPollinations = async (callback = null, overrideContent = null) => {
         const currentSession = Storage.getCurrentSession();
         const loadingDiv = document.createElement("div");
         loadingDiv.id = `loading-${Date.now()}`;
@@ -694,8 +725,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const nonce = Date.now().toString() + Math.random().toString(36).substring(2);
         const seed = randomSeed();
         const body = { messages, model: selectedModel, nonce };
+        await ensurePollinationsToken();
         const params = new URLSearchParams();
-        params.set("token", POLLINATIONS_TOKEN || "");
+        if (POLLINATIONS_TOKEN) params.set("token", POLLINATIONS_TOKEN);
         params.set("model", selectedModel);
         params.set("seed", seed);
         const apiUrl = `https://text.pollinations.ai/openai?${params.toString()}`;
