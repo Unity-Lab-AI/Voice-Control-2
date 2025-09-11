@@ -574,18 +574,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Send on Enter; newline with Shift+Enter
     chatInput.addEventListener('keydown', (e) => {
-        // IME safety and repeats
-        if (e.isComposing || e.key !== 'Enter') return;
-
-        if (e.shiftKey) {
-            // allow newline
-            return;
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
         }
-
-        e.preventDefault();
-        // Do not rely on button state—call the handler directly.
-        handleSendMessage();
-    }, { once: false });
+    });
     sendButton.disabled = chatInput.value.trim() === "";
     chatInput.dispatchEvent(new Event("input"));
     const initialSession = Storage.getCurrentSession();
