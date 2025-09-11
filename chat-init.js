@@ -572,11 +572,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     sendButton.addEventListener("click", handleSendMessage);
 
-    // Send on Enter (newline with Shift+Enter)
+    // Send on Enter, allow newline with Shift+Enter
     chatInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === 'Enter') {
+            if (e.shiftKey) return; // allow newline
             e.preventDefault();
-            handleSendMessage();
+            // Trigger the same action as the send button
+            sendButton.click();
         }
     });
     sendButton.disabled = chatInput.value.trim() === "";

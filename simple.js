@@ -285,6 +285,15 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
+        // Send on Enter, allow newline with Shift+Enter
+        simpleInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (e.shiftKey) return; // allow newline
+                e.preventDefault();
+                simpleSendBtn.click();
+            }
+        });
+
         function appendSimpleMessage(role, content, index) {
             const container = document.createElement("div");
             container.classList.add("simple-message");
