@@ -4,7 +4,6 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
-const DATA_DIR = path.join(ROOT, 'data');
 const THEMES_DIR = path.join(ROOT, 'themes');
 const DIST_DATA_DIR = path.join(DIST, 'data');
 const API_ROOT = 'https://text.pollinations.ai';
@@ -56,54 +55,23 @@ async function fetchRemoteModels(token) {
   };
 }
 
-function readFallbackModels() {
-  const fallbackPath = path.join(DATA_DIR, 'models.json');
-  if (!fs.existsSync(fallbackPath)) {
-    return null;
-  }
-  try {
-    const raw = fs.readFileSync(fallbackPath, 'utf8');
-    return JSON.parse(raw);
-  } catch (error) {
-    console.warn('Unable to parse fallback model catalog:', error.message);
-    return null;
-  }
-}
-
 async function writeModelCatalog(token) {
   ensureDir(DIST_DATA_DIR);
 
-  const fallback = readFallbackModels();
-  let catalog = null;
-
-  if (token) {
-    try {
-      catalog = await fetchRemoteModels(token);
-      if (catalog && fallback?.voices && !catalog.voices) {
-        catalog.voices = fallback.voices;
-      }
-    } catch (error) {
-      console.warn('Unable to fetch Pollinations model catalog with token:', error.message);
-      catalog = null;
-    }
+  if (!token) {
+    console.warn('No Pollinations token provided. Skipping model catalog bundling.');
+    return;
   }
 
   const outputPath = path.join(DIST_DATA_DIR, 'models.json');
 
-  if (catalog) {
+  try {
+    const catalog = await fetchRemoteModels(token);
     fs.writeFileSync(outputPath, JSON.stringify(catalog, null, 2));
     console.log('Wrote Pollinations model catalog to dist/data/models.json');
-    return;
+  } catch (error) {
+    console.warn('Unable to fetch Pollinations model catalog with token:', error.message);
   }
-
-  if (fallback) {
-    ensureDir(path.dirname(outputPath));
-    fs.writeFileSync(outputPath, JSON.stringify(fallback, null, 2));
-    console.log('Copied fallback model catalog to dist/data/models.json');
-    return;
-  }
-
-  console.warn('No model catalog could be bundled. Ensure data/models.json exists.');
 }
 
 async function main() {
@@ -117,8 +85,6 @@ async function main() {
 
   copyDirectory(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
   copyDirectory(THEMES_DIR, path.join(DIST, 'themes'));
-  copyDirectory(DATA_DIR, DIST_DATA_DIR);
-
   await writeModelCatalog(process.env.POLLINATIONS_TOKEN?.trim());
 
   console.log('Build output prepared at', DIST);

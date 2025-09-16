@@ -10,7 +10,6 @@ const STORAGE_KEYS = {
 
 const API_ENDPOINT = 'https://text.pollinations.ai/openai';
 const MODELS_ENDPOINT = 'https://text.pollinations.ai/models';
-const LOCAL_MODELS_FALLBACK = 'data/models.json';
 const API_REFERRER = 'www.unityailab.com';
 
 const API_SEED_LENGTH = 8;
@@ -620,15 +619,6 @@ async function fetchModels() {
     return await loadModelCatalog(apiUrl);
   } catch (apiError) {
     console.error('Unable to load Pollinations model catalog from API', apiError);
-
-    try {
-      const fallbackCatalog = await loadModelCatalog(LOCAL_MODELS_FALLBACK);
-      console.warn('Using bundled Pollinations model catalog as a fallback.');
-      return fallbackCatalog;
-    } catch (fallbackError) {
-      console.error('Unable to load bundled Pollinations model catalog', fallbackError);
-    }
-
     throw apiError;
   }
 }
