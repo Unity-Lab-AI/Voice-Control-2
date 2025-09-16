@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
 
 const API_ENDPOINT = 'https://text.pollinations.ai/openai';
 const MODELS_ENDPOINT = 'https://text.pollinations.ai/models';
+const LOCAL_MODELS_FALLBACK = 'data/models.json';
 const API_REFERRER = 'www.unityailab.com';
 
 const API_SEED_LENGTH = 8;
@@ -204,27 +205,22 @@ function buildGatewayUrl(model, options = {}) {
   }
 
   if (API_REFERRER) {
-    params.append('referer', API_REFERRER);
+    params.append('referrer', API_REFERRER);
   }
 
   const query = params.toString();
   return query ? `${API_ENDPOINT}?${query}` : API_ENDPOINT;
 }
 
-function buildModelsUrl(model) {
+function buildModelsUrl() {
   const params = new URLSearchParams();
-  const trimmedModel = typeof model === 'string' ? model.trim() : '';
-
-  if (trimmedModel) {
-    params.append('model', trimmedModel);
-  }
 
   if (API_TOKEN) {
     params.append('token', API_TOKEN);
   }
 
   if (API_REFERRER) {
-    params.append('referer', API_REFERRER);
+    params.append('referrer', API_REFERRER);
   }
 
   const query = params.toString();
@@ -495,29 +491,109 @@ function normalizeModelPayload(payload) {
   const modelMap = new Map();
   const voices = new Set();
 
+  const appendVoices = (list) => {
+    if (!Array.isArray(list)) return;
+    list
+      .map((voice) => {
+        if (typeof voice === 'string') {
+          return voice.trim();
+        }
+        if (voice && typeof voice === 'object') {
+          const identifier = voice.id || voice.name || voice.value;
+          return typeof identifier === 'string' ? identifier.trim() : '';
+        }
+        return '';
+      })
+      .filter(Boolean)
+      .forEach((voice) => voices.add(voice));
+  };
+
   const appendModel = (entry) => {
     if (!entry || modelMap.has(entry.id)) return;
     modelMap.set(entry.id, entry);
-    entry.voices.forEach((voice) => voices.add(voice));
+    appendVoices(entry.voices);
+  };
+
+  const resolveId = (item) => {
+    const candidate =
+      item?.id || item?.name || item?.model || item?.slug || item?.key || item?.identifier || item?.value;
+    if (typeof candidate === 'string') {
+      return candidate;
+    }
+    if (typeof candidate === 'number') {
+      return String(candidate);
+    }
+    return '';
+  };
+
+  const processItem = (item) => {
+    if (!item) return;
+    if (typeof item === 'string') {
+      appendModel(createModelEntry(item));
+    } else if (item && typeof item === 'object') {
+      appendModel(createModelEntry(resolveId(item), item));
+    }
+  };
+
+  const processCollection = (collection) => {
+    if (!Array.isArray(collection)) return;
+    collection.forEach(processItem);
+  };
+
+  const processKeyedObject = (object) => {
+    if (!object || typeof object !== 'object') return;
+
+    Object.entries(object).forEach(([id, details]) => {
+      if (id === 'voices') {
+        appendVoices(details);
+        return;
+      }
+
+      if (['generatedAt', 'updatedAt', 'refreshedAt', 'timestamp', 'source'].includes(id)) {
+        return;
+      }
+
+      if (Array.isArray(details)) {
+        processCollection(details);
+        return;
+      }
+
+      if (details && typeof details === 'object') {
+        appendModel(createModelEntry(id, details));
+        return;
+      }
+
+      if (typeof details === 'string') {
+        appendModel(createModelEntry(id, { description: details }));
+      }
+    });
   };
 
   if (Array.isArray(payload)) {
-    payload.forEach((item) => {
-      if (typeof item === 'string') {
-        appendModel(createModelEntry(item));
-      } else if (item && typeof item === 'object') {
-        const id = item.id || item.name || item.model;
-        appendModel(createModelEntry(id, item));
-      }
-    });
+    processCollection(payload);
   } else if (payload && typeof payload === 'object') {
-    Object.entries(payload).forEach(([id, details]) => {
-      if (typeof details === 'string') {
-        appendModel(createModelEntry(id, { description: details }));
-      } else {
-        appendModel(createModelEntry(id, details || {}));
+    appendVoices(payload.voices);
+
+    const collections = [
+      payload.models,
+      payload.data,
+      payload.items,
+      payload.results,
+      payload.availableModels,
+      payload.available_models
+    ];
+
+    let processed = false;
+    collections.forEach((collection) => {
+      if (Array.isArray(collection) && collection.length) {
+        processCollection(collection);
+        processed = true;
       }
     });
+
+    if (!processed) {
+      processKeyedObject(payload);
+    }
   }
 
   const models = Array.from(modelMap.values()).sort((a, b) =>
@@ -528,17 +604,32 @@ function normalizeModelPayload(payload) {
   return { models, voices: voiceList };
 }
 
+async function loadModelCatalog(url) {
+  const response = await fetch(url, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error(`Status ${response.status}`);
+  }
+  const data = await response.json();
+  return normalizeModelPayload(data);
+}
+
 async function fetchModels() {
+  const apiUrl = buildModelsUrl();
+
   try {
-    const response = await fetch(buildModelsUrl(state.selectedModel), { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error(`Status ${response.status}`);
+    return await loadModelCatalog(apiUrl);
+  } catch (apiError) {
+    console.error('Unable to load Pollinations model catalog from API', apiError);
+
+    try {
+      const fallbackCatalog = await loadModelCatalog(LOCAL_MODELS_FALLBACK);
+      console.warn('Using bundled Pollinations model catalog as a fallback.');
+      return fallbackCatalog;
+    } catch (fallbackError) {
+      console.error('Unable to load bundled Pollinations model catalog', fallbackError);
     }
-    const data = await response.json();
-    return normalizeModelPayload(data);
-  } catch (error) {
-    console.error('Unable to load Pollinations model catalog', error);
-    throw error;
+
+    throw apiError;
   }
 }
 
