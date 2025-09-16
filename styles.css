@@ -19,9 +19,15 @@
   --radius-small: 12px;
   --blur-heavy: blur(36px);
   --blur-medium: blur(18px);
+  --workspace-background: radial-gradient(circle at 20% 20%, rgba(164, 205, 255, 0.5), transparent 60%),
+    radial-gradient(circle at 80% 0%, rgba(255, 155, 222, 0.4), transparent 55%),
+    radial-gradient(circle at 50% 80%, rgba(126, 169, 255, 0.45), transparent 65%), #e6ecff;
+  --wallpaper-background: radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.35), transparent 60%),
+    radial-gradient(circle at 75% 10%, rgba(82, 116, 255, 0.25), transparent 55%),
+    radial-gradient(circle at 85% 85%, rgba(255, 135, 221, 0.25), transparent 60%);
 }
 
-body.theme-dark {
+body.theme-aurora {
   color-scheme: dark;
   --surface-glass: rgba(32, 36, 62, 0.72);
   --surface-panel: rgba(30, 34, 58, 0.78);
@@ -34,9 +40,15 @@ body.theme-dark {
   --accent: #8ea6ff;
   --accent-soft: rgba(142, 166, 255, 0.25);
   --shadow-soft: 0 30px 70px rgba(8, 12, 34, 0.55);
+  --workspace-background: radial-gradient(circle at 10% 15%, rgba(85, 125, 255, 0.16), transparent 55%),
+    radial-gradient(circle at 70% -10%, rgba(186, 101, 255, 0.22), transparent 60%),
+    radial-gradient(circle at 50% 85%, rgba(54, 217, 255, 0.12), transparent 70%), #0f1426;
+  --wallpaper-background: radial-gradient(circle at 18% 12%, rgba(132, 169, 255, 0.22), transparent 58%),
+    radial-gradient(circle at 80% 0%, rgba(192, 125, 255, 0.2), transparent 55%),
+    radial-gradient(circle at 85% 88%, rgba(68, 226, 255, 0.18), transparent 65%);
 }
 
-body.theme-amoled {
+body.theme-nightfall {
   color-scheme: dark;
   --surface-glass: rgba(8, 10, 18, 0.78);
   --surface-panel: rgba(12, 14, 24, 0.92);
@@ -49,6 +61,75 @@ body.theme-amoled {
   --accent: #9ab6ff;
   --accent-soft: rgba(154, 182, 255, 0.22);
   --shadow-soft: 0 24px 84px rgba(0, 0, 0, 0.65);
+  --workspace-background: radial-gradient(circle at 12% 20%, rgba(255, 133, 237, 0.16), transparent 58%),
+    radial-gradient(circle at 85% -10%, rgba(108, 165, 255, 0.22), transparent 65%),
+    radial-gradient(circle at 52% 90%, rgba(82, 255, 227, 0.12), transparent 70%), #05060a;
+  --wallpaper-background: radial-gradient(circle at 20% 15%, rgba(255, 120, 210, 0.18), transparent 60%),
+    radial-gradient(circle at 82% 0%, rgba(104, 165, 255, 0.18), transparent 58%),
+    radial-gradient(circle at 88% 88%, rgba(82, 255, 227, 0.18), transparent 70%);
+}
+
+body.theme-ocean {
+  color-scheme: light;
+  --surface-glass: rgba(224, 244, 255, 0.75);
+  --surface-panel: rgba(210, 235, 250, 0.72);
+  --surface-panel-strong: rgba(220, 245, 255, 0.86);
+  --surface-chat-assistant: rgba(235, 248, 255, 0.86);
+  --surface-chat-user: linear-gradient(135deg, rgba(0, 182, 242, 0.85), rgba(0, 136, 231, 0.8));
+  --stroke: rgba(40, 145, 200, 0.28);
+  --text-strong: #062335;
+  --text-muted: rgba(6, 35, 53, 0.68);
+  --accent: #1896d3;
+  --accent-soft: rgba(24, 150, 211, 0.25);
+  --shadow-soft: 0 22px 64px rgba(22, 96, 140, 0.25);
+  --workspace-background: radial-gradient(circle at 12% 18%, rgba(134, 206, 255, 0.35), transparent 62%),
+    radial-gradient(circle at 86% 6%, rgba(0, 192, 255, 0.3), transparent 58%),
+    radial-gradient(circle at 48% 88%, rgba(133, 255, 224, 0.22), transparent 68%), #dff5ff;
+  --wallpaper-background: radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.42), transparent 60%),
+    radial-gradient(circle at 78% 4%, rgba(0, 160, 227, 0.22), transparent 55%),
+    radial-gradient(circle at 85% 92%, rgba(115, 226, 238, 0.28), transparent 70%);
+}
+
+body.theme-honeycomb {
+  color-scheme: light;
+  --surface-glass: rgba(255, 244, 217, 0.78);
+  --surface-panel: rgba(255, 235, 194, 0.8);
+  --surface-panel-strong: rgba(255, 240, 210, 0.88);
+  --surface-chat-assistant: rgba(255, 247, 227, 0.88);
+  --surface-chat-user: linear-gradient(135deg, rgba(255, 196, 94, 0.9), rgba(255, 167, 63, 0.85));
+  --stroke: rgba(255, 183, 66, 0.32);
+  --text-strong: #3f2400;
+  --text-muted: rgba(63, 36, 0, 0.68);
+  --accent: #ff9b21;
+  --accent-soft: rgba(255, 155, 33, 0.22);
+  --shadow-soft: 0 24px 62px rgba(158, 96, 18, 0.28);
+  --workspace-background: radial-gradient(circle at 16% 18%, rgba(255, 214, 138, 0.38), transparent 62%),
+    radial-gradient(circle at 84% 0%, rgba(255, 181, 94, 0.3), transparent 58%),
+    radial-gradient(circle at 50% 88%, rgba(255, 227, 167, 0.25), transparent 70%), #fff4d9;
+  --wallpaper-background: radial-gradient(circle at 24% 14%, rgba(255, 255, 255, 0.42), transparent 60%),
+    radial-gradient(circle at 78% 4%, rgba(255, 187, 102, 0.28), transparent 55%),
+    radial-gradient(circle at 88% 92%, rgba(255, 220, 164, 0.32), transparent 68%);
+}
+
+body.theme-serenity {
+  color-scheme: light;
+  --surface-glass: rgba(238, 232, 255, 0.72);
+  --surface-panel: rgba(230, 220, 255, 0.78);
+  --surface-panel-strong: rgba(242, 236, 255, 0.86);
+  --surface-chat-assistant: rgba(249, 244, 255, 0.88);
+  --surface-chat-user: linear-gradient(135deg, rgba(186, 158, 255, 0.85), rgba(122, 193, 255, 0.82));
+  --stroke: rgba(158, 140, 255, 0.28);
+  --text-strong: #241544;
+  --text-muted: rgba(36, 21, 68, 0.64);
+  --accent: #8a78ff;
+  --accent-soft: rgba(138, 120, 255, 0.24);
+  --shadow-soft: 0 24px 68px rgba(63, 54, 126, 0.28);
+  --workspace-background: radial-gradient(circle at 18% 16%, rgba(198, 177, 255, 0.34), transparent 62%),
+    radial-gradient(circle at 84% -6%, rgba(142, 194, 255, 0.32), transparent 58%),
+    radial-gradient(circle at 52% 90%, rgba(214, 182, 255, 0.22), transparent 70%), #f2edff;
+  --wallpaper-background: radial-gradient(circle at 22% 12%, rgba(255, 255, 255, 0.45), transparent 60%),
+    radial-gradient(circle at 80% 0%, rgba(180, 158, 255, 0.26), transparent 58%),
+    radial-gradient(circle at 90% 90%, rgba(170, 215, 255, 0.28), transparent 70%);
 }
 
 * {
@@ -60,18 +141,15 @@ body {
   min-height: 100vh;
   font-family: var(--font-sans);
   color: var(--text-strong);
-  background: radial-gradient(circle at 20% 20%, rgba(164, 205, 255, 0.5), transparent 60%),
-    radial-gradient(circle at 80% 0%, rgba(255, 155, 222, 0.4), transparent 55%),
-    radial-gradient(circle at 50% 80%, rgba(126, 169, 255, 0.45), transparent 65%), #e6ecff;
-  overflow: hidden;
+  background: var(--workspace-background);
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .wallpaper {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.35), transparent 60%),
-    radial-gradient(circle at 75% 10%, rgba(82, 116, 255, 0.25), transparent 55%),
-    radial-gradient(circle at 85% 85%, rgba(255, 135, 221, 0.25), transparent 60%);
+  background: var(--wallpaper-background);
   filter: var(--blur-medium);
   z-index: 0;
   pointer-events: none;
@@ -213,11 +291,13 @@ body {
 }
 
 .window-body {
+  flex: 1;
   display: grid;
   grid-template-columns: minmax(260px, 320px) 1fr;
   gap: clamp(20px, 3vw, 36px);
   padding: 24px clamp(24px, 5vw, 48px) 40px;
   min-height: 0;
+  overflow: hidden;
 }
 
 .control-pane {
@@ -225,6 +305,7 @@ body {
   flex-direction: column;
   gap: 20px;
   min-height: 0;
+  overflow-y: auto;
 }
 
 .panel {
@@ -273,8 +354,8 @@ button {
   color: var(--text-strong);
 }
 
-body.theme-dark .input-group select,
-body.theme-amoled .input-group select {
+body.theme-aurora .input-group select,
+body.theme-nightfall .input-group select {
   background: rgba(18, 22, 32, 0.8);
   color: var(--text-strong);
   border-color: rgba(120, 134, 200, 0.3);
@@ -384,6 +465,7 @@ body.theme-amoled .input-group select {
   flex-direction: column;
   min-height: 0;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  overflow: hidden;
 }
 
 .chat-log {
@@ -394,6 +476,39 @@ body.theme-amoled .input-group select {
   flex-direction: column;
   gap: 20px;
   scroll-behavior: smooth;
+}
+
+.chat-empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.chat-empty-card {
+  max-width: 420px;
+  display: grid;
+  gap: 14px;
+  padding: 32px;
+  border-radius: var(--radius-medium);
+  border: 1px dashed var(--stroke);
+  background: var(--surface-panel-strong);
+  background: color-mix(in srgb, var(--surface-panel-strong) 88%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 18px 44px rgba(18, 24, 46, 0.16);
+}
+
+.chat-empty-card h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--text-strong);
+}
+
+.chat-empty-card p {
+  margin: 0;
+  line-height: 1.6;
 }
 
 .chat-message {
@@ -511,8 +626,8 @@ body.theme-amoled .input-group select {
   border-bottom-right-radius: var(--radius-large);
 }
 
-body.theme-dark .composer,
-body.theme-amoled .composer {
+body.theme-aurora .composer,
+body.theme-nightfall .composer {
   background: rgba(12, 16, 28, 0.82);
 }
 
@@ -527,8 +642,8 @@ body.theme-amoled .composer {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-body.theme-dark .composer textarea,
-body.theme-amoled .composer textarea {
+body.theme-aurora .composer textarea,
+body.theme-nightfall .composer textarea {
   background: rgba(18, 22, 32, 0.84);
   border-color: rgba(120, 134, 200, 0.3);
   color: var(--text-strong);
