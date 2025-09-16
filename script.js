@@ -18,8 +18,9 @@ const FALLBACK_MODELS = [
 
 const FALLBACK_VOICES = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
 
-const API_ENDPOINT = 'https://text.pollinations.ai/openai?referrer=unity-copilot-studio.app';
-const MODELS_ENDPOINT = 'https://text.pollinations.ai/models?referrer=unity-copilot-studio.app';
+const API_ENDPOINT = 'https://text.pollinations.ai/openai';
+const MODELS_ENDPOINT = 'https://text.pollinations.ai/models';
+const API_REFERRER = 'unity-chat.app';
 
 const state = {
   aiInstruct: '',
@@ -41,10 +42,41 @@ const formatters = {
     if (!input) {
       return '';
     }
-    const rawHtml = marked.parse(input, { mangle: false, headerIds: false });
-    return DOMPurify.sanitize(rawHtml, { USE_PROFILES: { html: true } });
+    const hasMarked = typeof marked !== 'undefined' && typeof marked.parse === 'function';
+    const hasDomPurify = typeof DOMPurify !== 'undefined' && typeof DOMPurify.sanitize === 'function';
+
+    if (hasMarked) {
+      const rawHtml = marked.parse(input, { mangle: false, headerIds: false });
+      return hasDomPurify ? DOMPurify.sanitize(rawHtml, { USE_PROFILES: { html: true } }) : rawHtml;
+    }
+
+    const escaped = input
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+    return escaped.replace(/\n/g, '<br />');
   }
 };
+
+function buildGatewayUrl(model) {
+  const url = new URL(API_ENDPOINT);
+  url.searchParams.set('referrer', API_REFERRER);
+  if (model) {
+    url.searchParams.set('model', model);
+  }
+  return url.toString();
+}
+
+function buildModelsUrl(model) {
+  const url = new URL(MODELS_ENDPOINT);
+  url.searchParams.set('referrer', API_REFERRER);
+  if (model) {
+    url.searchParams.set('model', model);
+  }
+  return url.toString();
+}
 
 function bindElements() {
   elements.modelSelect = document.getElementById('modelSelect');
@@ -289,7 +321,7 @@ function normalizeModelPayload(payload) {
 
 async function fetchModels() {
   try {
-    const response = await fetch(MODELS_ENDPOINT, { cache: 'no-store' });
+    const response = await fetch(buildModelsUrl(state.selectedModel), { cache: 'no-store' });
     if (!response.ok) {
       throw new Error(`Status ${response.status}`);
     }
@@ -459,7 +491,9 @@ function appendChatMessage(message) {
     codeEl.textContent = code;
     pre.appendChild(codeEl);
     bubble.appendChild(pre);
-    Prism.highlightElement(codeEl);
+    if (typeof Prism !== 'undefined' && typeof Prism.highlightElement === 'function') {
+      Prism.highlightElement(codeEl);
+    }
   });
 
   if (content.memories.length) {
@@ -498,8 +532,8 @@ function addSystemWelcomeIfNeeded() {
     role: 'assistant',
     timestamp: new Date().toISOString(),
     content:
-      'Welcome to your Windows 11 2025 inspired workspace! I am ready to chat, craft code snippets, and fetch Pollinations images. ' +
-      'Adjust the model, voice, and theme from the control hub, then send me a message to begin.'
+      'Welcome to Unity Chat! I am ready to collaborate on ideas, craft code snippets, and fetch Pollinations imagery. ' +
+      'Tune the model, voice, and theme from the control hub whenever you are ready to begin.'
   };
   state.history.push(welcome);
 }
@@ -613,7 +647,7 @@ async function sendMessage(event) {
 
   try {
     const payload = buildPayload();
-    const response = await fetch(API_ENDPOINT, {
+    const response = await fetch(buildGatewayUrl(state.selectedModel), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -671,6 +705,9 @@ async function sendMessage(event) {
   } finally {
     state.isSending = false;
     elements.sendButton.disabled = false;
+    if (elements.messageInput) {
+      elements.messageInput.focus({ preventScroll: true });
+    }
   }
 }
 
