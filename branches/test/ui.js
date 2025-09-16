@@ -30,6 +30,233 @@ document.addEventListener("DOMContentLoaded", () => {
     const clearChatSessionsBtn = document.getElementById("clear-chat-sessions-btn");
     const clearUserDataBtn = document.getElementById("clear-user-data-btn");
     const toggleSimpleModeBtn = document.getElementById("toggle-simple-mode");
+    const twilioServerInput = document.getElementById("twilio-server-url");
+    const twilioPhoneInput = document.getElementById("twilio-phone-number");
+    const twilioPromptInput = document.getElementById("twilio-initial-prompt");
+    const twilioVoiceSelect = document.getElementById("twilio-voice-select");
+    const twilioCallBtn = document.getElementById("twilio-start-call-btn");
+    const twilioStatusEl = document.getElementById("twilio-call-status");
+    const twilioSecretsContainer = document.getElementById("twilio-secret-credentials");
+    const twilioAccountSidDisplay = document.getElementById("twilio-account-sid-display");
+    const twilioAuthTokenDisplay = document.getElementById("twilio-auth-token-display");
+    const twilioPhoneDisplay = document.getElementById("twilio-phone-display");
+
+    const twilioStorageKeys = {
+        server: "unityTwilioServerUrl",
+        phone: "unityTwilioPhoneNumber",
+        prompt: "unityTwilioInitialPrompt",
+        voice: "unityTwilioVoice"
+    };
+
+    const deploymentSecrets = {
+        accountSid: typeof window.TWILIO_ACCOUNT_SID === "string" ? window.TWILIO_ACCOUNT_SID.trim() : "",
+        authToken: typeof window.TWILIO_AUTH_TOKEN === "string" ? window.TWILIO_AUTH_TOKEN.trim() : "",
+        phoneNumber: typeof window.TWILIO_PHONE_NUMBER === "string" ? window.TWILIO_PHONE_NUMBER.trim() : ""
+    };
+
+    function applySecretToField(field, value) {
+        if (!field) return false;
+        const normalized = typeof value === "string" ? value.trim() : "";
+        const wrapper = field.closest(".form-group") || field.parentElement;
+        if (normalized) {
+            field.value = normalized;
+            if (wrapper && wrapper.classList.contains("hidden")) {
+                wrapper.classList.remove("hidden");
+            }
+            return true;
+        }
+        field.value = "";
+        if (wrapper && !wrapper.classList.contains("hidden")) {
+            wrapper.classList.add("hidden");
+        }
+        return false;
+    }
+
+    if (twilioSecretsContainer) {
+        const hasSecrets = [
+            applySecretToField(twilioAccountSidDisplay, deploymentSecrets.accountSid),
+            applySecretToField(twilioAuthTokenDisplay, deploymentSecrets.authToken),
+            applySecretToField(twilioPhoneDisplay, deploymentSecrets.phoneNumber)
+        ].some(Boolean);
+
+        twilioSecretsContainer.classList.toggle("hidden", !hasSecrets);
+    }
+
+    function sanitizeServerUrl(value) {
+        if (!value) return "";
+        return value.trim().replace(/\/+$/, "");
+    }
+
+    function persistValue(key, value) {
+        if (!key) return;
+        const trimmed = typeof value === "string" ? value.trim() : value;
+        if (trimmed) {
+            localStorage.setItem(key, trimmed);
+        } else {
+            localStorage.removeItem(key);
+        }
+    }
+
+    function updateTwilioStatus(message, state = "idle") {
+        if (!twilioStatusEl) return;
+        twilioStatusEl.textContent = message;
+        twilioStatusEl.dataset.state = state;
+    }
+
+    if (twilioStatusEl) {
+        updateTwilioStatus("Ready to place a call. Enter your server URL and phone number, or leave the URL blank to use the built-in GitHub Pages voice bridge.");
+    }
+
+    if (twilioServerInput) {
+        const storedServer = localStorage.getItem(twilioStorageKeys.server);
+        if (storedServer) {
+            twilioServerInput.value = storedServer;
+        }
+        twilioServerInput.addEventListener("change", () => {
+            const normalized = sanitizeServerUrl(twilioServerInput.value);
+            if (normalized) {
+                twilioServerInput.value = normalized;
+                persistValue(twilioStorageKeys.server, normalized);
+            } else {
+                twilioServerInput.value = "";
+                persistValue(twilioStorageKeys.server, "");
+            }
+        });
+    }
+
+    if (twilioPhoneInput) {
+        const storedPhone = localStorage.getItem(twilioStorageKeys.phone);
+        if (storedPhone) {
+            twilioPhoneInput.value = storedPhone;
+        }
+        if (!twilioPhoneInput.value && deploymentSecrets.phoneNumber) {
+            twilioPhoneInput.value = deploymentSecrets.phoneNumber;
+            persistValue(twilioStorageKeys.phone, deploymentSecrets.phoneNumber);
+        }
+        twilioPhoneInput.addEventListener("change", () => {
+            persistValue(twilioStorageKeys.phone, twilioPhoneInput.value);
+        });
+        twilioPhoneInput.addEventListener("blur", () => {
+            persistValue(twilioStorageKeys.phone, twilioPhoneInput.value);
+        });
+    }
+
+    if (twilioPromptInput) {
+        const storedPrompt = localStorage.getItem(twilioStorageKeys.prompt);
+        if (storedPrompt) {
+            twilioPromptInput.value = storedPrompt;
+        }
+        twilioPromptInput.addEventListener("change", () => {
+            persistValue(twilioStorageKeys.prompt, twilioPromptInput.value);
+        });
+        twilioPromptInput.addEventListener("blur", () => {
+            persistValue(twilioStorageKeys.prompt, twilioPromptInput.value);
+        });
+    }
+
+    if (twilioVoiceSelect) {
+        const storedVoice = localStorage.getItem(twilioStorageKeys.voice) || "nova";
+        twilioVoiceSelect.value = storedVoice;
+        twilioVoiceSelect.addEventListener("change", () => {
+            persistValue(twilioStorageKeys.voice, twilioVoiceSelect.value);
+        });
+    }
+
+    async function startTwilioCall() {
+        if (!twilioCallBtn || !twilioServerInput || !twilioPhoneInput) return;
+
+        const rawServerUrl = sanitizeServerUrl(twilioServerInput.value);
+        const usingBuiltInBridge = !rawServerUrl;
+        let serverBaseUrl = rawServerUrl;
+
+        if (usingBuiltInBridge) {
+            const origin = (window.location && window.location.origin) ? window.location.origin.trim() : "";
+            if (!origin || !origin.startsWith("https://")) {
+                updateTwilioStatus("Built-in voice bridge is only available on HTTPS deployments. Provide your own server URL while developing locally.", "error");
+                if (window.showToast) window.showToast("Built-in voice bridge requires HTTPS hosting.");
+                return;
+            }
+            serverBaseUrl = `${origin.replace(/\/$/, "")}/_functions`;
+        } else {
+            let parsedUrl;
+            try {
+                parsedUrl = new URL(rawServerUrl);
+            } catch (err) {
+                updateTwilioStatus("The voice bridge URL is not valid. Double-check the format.", "error");
+                if (window.showToast) window.showToast("Provide a valid HTTPS URL for the voice bridge.");
+                return;
+            }
+
+            if (parsedUrl.protocol !== "https:" && parsedUrl.hostname !== "localhost") {
+                updateTwilioStatus("Use an HTTPS URL so Twilio can reach your server.", "error");
+                if (window.showToast) window.showToast("HTTPS is required unless you are testing on localhost.");
+                return;
+            }
+        }
+
+        const phoneNumber = (twilioPhoneInput.value || "").trim();
+        if (!phoneNumber) {
+            updateTwilioStatus("Enter the destination phone number in E.164 format.", "error");
+            twilioPhoneInput.focus();
+            if (window.showToast) window.showToast("Phone number is required.");
+            return;
+        }
+
+        const initialPrompt = twilioPromptInput ? twilioPromptInput.value.trim() : "";
+        const voice = twilioVoiceSelect ? twilioVoiceSelect.value : "nova";
+
+        persistValue(twilioStorageKeys.server, usingBuiltInBridge ? "" : serverBaseUrl);
+        persistValue(twilioStorageKeys.phone, phoneNumber);
+        persistValue(twilioStorageKeys.prompt, initialPrompt);
+        persistValue(twilioStorageKeys.voice, voice);
+
+        const normalizedBase = serverBaseUrl.replace(/\/$/, "");
+        const endpoint = `${normalizedBase}/api/start-call`;
+        updateTwilioStatus(usingBuiltInBridge ? "Contacting the built-in voice bridge…" : "Contacting the voice bridge…", "pending");
+        twilioCallBtn.disabled = true;
+
+        try {
+            let response;
+            try {
+                response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ phoneNumber, initialPrompt, voice })
+                });
+            } catch (networkError) {
+                throw new Error("Could not reach the voice bridge server. Check the URL and network connection.");
+            }
+
+            let data = {};
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                data = {};
+            }
+
+            if (!response.ok) {
+                const errMessage = data.error || `Server responded with status ${response.status}.`;
+                throw new Error(errMessage);
+            }
+
+            const successMessage = data.message || "Call started. Answer your phone to chat with Unity.";
+            updateTwilioStatus(successMessage, "success");
+            if (window.showToast) window.showToast("Unity is calling your phone now!");
+        } catch (error) {
+            const message = error && error.message ? error.message : "Failed to start the call.";
+            updateTwilioStatus(message, "error");
+            console.error("Failed to start Twilio call", error);
+            if (window.showToast) window.showToast(message);
+        } finally {
+            twilioCallBtn.disabled = false;
+        }
+    }
+
+    if (twilioCallBtn) {
+        twilioCallBtn.addEventListener("click", () => {
+            startTwilioCall();
+        });
+    }
 
     let themeLinkElement = document.getElementById("theme-link");
     if (!themeLinkElement) {

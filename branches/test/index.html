@@ -218,6 +218,80 @@
           <div class="alert alert-warning mt-3" role="alert">
             <i class="fas fa-exclamation-circle"></i> Warning: "Delete All User Data" will permanently remove all your chat history, settings, and preferences.
           </div>
+          <hr class="divider" />
+          <div class="twilio-call-card">
+            <h4 class="twilio-call-heading">
+              <i class="fas fa-phone"></i> Unity Phone Call
+            </h4>
+            <p class="twilio-call-description">
+              Configure your Twilio voice bridge server and start a phone call where Unity speaks using Pollinations.
+            </p>
+            <div id="twilio-secret-credentials" class="twilio-secret-credentials hidden mb-3">
+              <div class="alert alert-secondary d-flex align-items-center gap-2 mb-3" role="alert">
+                <i class="fas fa-key"></i>
+                <span>These Twilio credentials were loaded from repository secrets.</span>
+              </div>
+              <div class="form-group mb-3">
+                <label for="twilio-account-sid-display" class="form-label">Twilio Account SID</label>
+                <input id="twilio-account-sid-display" type="text" class="form-control" readonly />
+              </div>
+              <div class="form-group mb-3">
+                <label for="twilio-auth-token-display" class="form-label">Twilio Auth Token</label>
+                <input id="twilio-auth-token-display" type="text" class="form-control" readonly />
+              </div>
+              <div class="form-group mb-0">
+                <label for="twilio-phone-display" class="form-label">Twilio Phone Number</label>
+                <input id="twilio-phone-display" type="text" class="form-control" readonly />
+              </div>
+            </div>
+            <div class="form-group mb-3">
+              <label for="twilio-server-url" class="form-label">Voice bridge URL</label>
+              <input
+                type="url"
+                id="twilio-server-url"
+                class="form-control"
+                placeholder="https://your-voice-bridge.example.com"
+              />
+              <div class="form-text">
+                Provide the HTTPS base URL of the deployed server that exposes the <code>/api/start-call</code> route, or leave this field blank to use the built-in GitHub Pages voice bridge.
+              </div>
+            </div>
+            <div class="form-group mb-3">
+              <label for="twilio-phone-number" class="form-label">Phone number (E.164 format)</label>
+              <input
+                type="tel"
+                id="twilio-phone-number"
+                class="form-control"
+                placeholder="+15551234567"
+              />
+            </div>
+            <div class="form-group mb-3">
+              <label for="twilio-initial-prompt" class="form-label">Initial topic or instructions</label>
+              <textarea
+                id="twilio-initial-prompt"
+                class="form-control"
+                rows="3"
+                placeholder="Ask Unity to call me with an update about our project."
+              ></textarea>
+            </div>
+            <div class="form-group mb-3">
+              <label for="twilio-voice-select" class="form-label">Pollinations voice</label>
+              <select id="twilio-voice-select" class="form-control">
+                <option value="nova">Nova (default)</option>
+                <option value="alloy">Alloy</option>
+                <option value="fable">Fable</option>
+                <option value="onyx">Onyx</option>
+                <option value="shimmer">Shimmer</option>
+                <option value="echo">Echo</option>
+              </select>
+            </div>
+            <div class="d-grid gap-2">
+              <button id="twilio-start-call-btn" class="btn btn-success">
+                <i class="fas fa-phone-volume"></i> Call My Phone
+              </button>
+            </div>
+            <div id="twilio-call-status" class="twilio-call-status mt-3" role="status" aria-live="polite"></div>
+          </div>
         </div>
       </div>
     </div>

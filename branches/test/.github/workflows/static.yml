@@ -1,0 +1,85 @@
+name: Deploy static site to GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Inject deployment secrets as window-scoped variables
+      - name: Inject deployment secrets into index.html
+        if: ${{ secrets.POLLINATIONS_TOKEN != '' || secrets.TWILIO_ACCOUNT_SID != '' || secrets.TWILIO_AUTH_TOKEN != '' || secrets.TWILIO_PHONE_NUMBER != '' }}
+        env:
+          POLLINATIONS_TOKEN: ${{ secrets.POLLINATIONS_TOKEN }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_PHONE_NUMBER: ${{ secrets.TWILIO_PHONE_NUMBER }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import re
+          import sys
+
+          path = "index.html"
+          secrets = {
+              "POLLINATIONS_TOKEN": os.environ.get("POLLINATIONS_TOKEN", "").strip(),
+              "TWILIO_ACCOUNT_SID": os.environ.get("TWILIO_ACCOUNT_SID", "").strip(),
+              "TWILIO_AUTH_TOKEN": os.environ.get("TWILIO_AUTH_TOKEN", "").strip(),
+              "TWILIO_PHONE_NUMBER": os.environ.get("TWILIO_PHONE_NUMBER", "").strip(),
+          }
+
+          payload = {key: value for key, value in secrets.items() if value}
+          if not payload:
+              sys.exit(0)
+
+          script = "    <script id=\"deployment-secrets\">" + "".join(
+              f"window.{key}={json.dumps(value)};" for key, value in payload.items()
+          ) + "</script>"
+
+          with open(path, encoding="utf-8") as handle:
+              html = handle.read()
+
+          script_pattern = re.compile(r"<script id=\"deployment-secrets\">.*?</script>", re.IGNORECASE | re.DOTALL)
+          legacy_pattern = re.compile(r"<script>window\.POLLINATIONS_TOKEN.*?</script>", re.IGNORECASE | re.DOTALL)
+
+          if script_pattern.search(html):
+              html = script_pattern.sub(script, html)
+          elif legacy_pattern.search(html):
+              html = legacy_pattern.sub(script, html)
+          else:
+              html = re.sub(r"</head>", script + "\n  </head>", html, count=1, flags=re.IGNORECASE)
+
+          with open(path, "w", encoding="utf-8") as handle:
+              handle.write(html)
+          PY
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
