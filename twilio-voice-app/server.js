@@ -11,6 +11,17 @@ if (!fetchImpl) {
   fetchImpl = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 }
 
+function getFetchImplementation() {
+  return fetchImpl;
+}
+
+function setFetchImplementation(customFetch) {
+  if (typeof customFetch !== 'function') {
+    throw new TypeError('Fetch implementation must be a function.');
+  }
+  fetchImpl = customFetch;
+}
+
 const PORT = process.env.PORT || 4000;
 const PUBLIC_SERVER_URL = process.env.PUBLIC_SERVER_URL;
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
@@ -66,7 +77,7 @@ async function fetchPollinationsResponse(session, userMessage) {
   }
 
   const payload = {
-    model: 'openai',
+    model: 'unity',
     messages: session.messages,
     temperature: 0.8,
     max_output_tokens: 300,
@@ -269,6 +280,30 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error.' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Twilio voice bridge listening on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Twilio voice bridge listening on port ${PORT}`);
+  });
+}
+
+function resetSessionStore() {
+  sessions.clear();
+}
+
+module.exports = {
+  app,
+  buildGatherAction,
+  buildVoiceResponse,
+  createSession,
+  createTtsUrl,
+  DEFAULT_VOICE,
+  fetchPollinationsResponse,
+  getFetchImplementation,
+  getSession,
+  resetSessionStore,
+  sanitizeForTts,
+  setFetchImplementation,
+  sessions,
+  startPhoneCall,
+  SYSTEM_PROMPT
+};
