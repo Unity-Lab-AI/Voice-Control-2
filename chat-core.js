@@ -502,12 +502,23 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
+        const sanitizeForApi = (message) => {
+            if (!message || typeof message !== "object") return null;
+            let { role, content } = message;
+            if (typeof content !== "string" || !content.trim()) return null;
+            if (role === "ai") role = "assistant";
+            if (role === "assistant" || role === "user") {
+                return { role, content };
+            }
+            return null;
+        };
+
         const messages = [];
-        if (window.aiInstructions) {
+        if (typeof window.aiInstructions === "string" && window.aiInstructions.trim()) {
             messages.push({ role: "system", content: window.aiInstructions });
         }
         const memories = Memory.getMemories();
-        if (memories?.length) {
+        if (Array.isArray(memories) && memories.length) {
             messages.push({ role: "system", content: `Relevant memory:\n${memories.join("\n")}\nUse it in your response.` });
         }
 
@@ -515,12 +526,19 @@ document.addEventListener("DOMContentLoaded", () => {
         const end = currentSession.messages.length - 1;
         const start = Math.max(0, end - HISTORY);
         for (let i = start; i < end; i++) {
-            messages.push(currentSession.messages[i]);
+            const sanitized = sanitizeForApi(currentSession.messages[i]);
+            if (sanitized) messages.push(sanitized);
         }
 
-        const lastUser = overrideContent || currentSession.messages[end]?.content;
-        if (lastUser) {
-            messages.push({ role: "user", content: lastUser });
+        let lastUserMessage = typeof overrideContent === "string" ? overrideContent : null;
+        if (!lastUserMessage) {
+            const potential = currentSession.messages[end];
+            if (potential?.role === "user" && typeof potential.content === "string") {
+                lastUserMessage = potential.content;
+            }
+        }
+        if (lastUserMessage && lastUserMessage.trim()) {
+            messages.push({ role: "user", content: lastUserMessage });
         }
 
         const modelSelectEl = document.getElementById("model-select");
