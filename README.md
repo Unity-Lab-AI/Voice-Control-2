@@ -31,11 +31,26 @@ npm start
 
 This launches `http-server` on `http://localhost:8080` so you can verify styling and functionality before publishing.
 
+### GitHub Pages voice bridge (serverless)
+
+When the site is deployed to GitHub Pages you can use the bundled serverless functions instead of hosting the `server/` application yourself.
+
+1. Enable **Pages Functions** for the repository (Settings → Pages → Build and deployment → Functions).
+2. Add the following environment variables in the same settings screen so the functions can authenticate with Twilio:
+   - `TWILIO_ACCOUNT_SID`
+   - `TWILIO_AUTH_TOKEN`
+   - `TWILIO_PHONE_NUMBER`
+   - Optional: `POLLINATIONS_VOICE` for a default Pollinations preset, `ALLOWED_ORIGIN` to lock down CORS, and `POLLINATIONS_TOKEN` if you use a private Pollinations referrer/token.
+3. Redeploy the site. GitHub Pages will publish the functions at `/_functions/*`.
+4. Open the Unity chat settings and leave the **Voice bridge URL** blank. The UI will automatically call the serverless voice bridge.
+
+The traditional Node server is still available for self-hosting or when you deploy Unity Chat somewhere other than GitHub Pages.
+
 ### Starting a phone call from the UI
 
 Open the **Settings** modal and scroll to the **Unity Phone Call** card. Provide:
 
-1. **Voice bridge URL** – The HTTPS base URL where you deployed the server found in `server/`. It must expose the `/api/start-call` endpoint.
+1. **Voice bridge URL** – The HTTPS base URL where you deployed the server found in `server/`, or leave the field blank to use the built-in GitHub Pages voice bridge.
 2. **Phone number** – Destination number in E.164 format (e.g. `+15551234567`).
 3. **Initial topic** (optional) – Unity will open the call with this context.
 4. **Pollinations voice** – Voice preset the Twilio call should use (`nova`, `alloy`, `fable`, `onyx`, `shimmer`, or `echo`).
