@@ -454,6 +454,69 @@ body {
   box-shadow: 0 0 0 2px rgba(112,112,112,0.2);
 }
 
+.twilio-call-card {
+  background: #1f1f1f;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 20px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+
+.twilio-call-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.twilio-call-heading i {
+  color: #4caf50;
+}
+
+.twilio-call-description {
+  font-size: 0.95rem;
+  color: #cfcfcf;
+  margin-bottom: 16px;
+}
+
+.twilio-call-status {
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.twilio-call-status[data-state="idle"] {
+  background: rgba(255,255,255,0.04);
+  color: #b0b0b0;
+  border-color: rgba(255,255,255,0.08);
+}
+
+.twilio-call-status[data-state="pending"] {
+  background: rgba(255, 193, 7, 0.12);
+  color: #ffca28;
+  border-color: rgba(255, 193, 7, 0.35);
+}
+
+.twilio-call-status[data-state="success"] {
+  background: rgba(76, 175, 80, 0.12);
+  color: #81c784;
+  border-color: rgba(76, 175, 80, 0.35);
+}
+
+.twilio-call-status[data-state="error"] {
+  background: rgba(244, 67, 54, 0.12);
+  color: #ef9a9a;
+  border-color: rgba(244, 67, 54, 0.35);
+}
+
 
 .personalization-modal {
   max-width: 600px;

@@ -8,7 +8,7 @@ A lightweight Node + Twilio companion service that lets Unity call a phone numbe
 - 🧠 **Unity text brain** – Conversations use the same Pollinations text API powering Unity Chat.
 - 🔊 **Voice playback** – Assistant replies are played with Pollinations TTS directly over the call.
 - 🗣️ **Two-way dialog** – Twilio speech recognition captures the caller's reply and routes it back to the AI.
-- 🌐 **Self-hosted UI** – Includes a simple dashboard to start calls and watch status updates.
+- 🌐 **Browser integration** – Designed to be triggered from the Unity Chat frontend hosted on GitHub Pages or any static site.
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ A lightweight Node + Twilio companion service that lets Unity call a phone numbe
 
 1. Install dependencies:
    ```bash
-   cd twilio-voice-app
+   cd server
    npm install
    ```
 2. Copy the example environment file and fill in your details:
@@ -30,6 +30,7 @@ A lightweight Node + Twilio companion service that lets Unity call a phone numbe
    Required variables:
    - `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`
    - `PUBLIC_SERVER_URL` – The **public** HTTPS URL that Twilio will call back (e.g. your ngrok tunnel).
+   - `ALLOWED_ORIGIN` – The URL of the Unity Chat frontend that will call this API.
    - Optional: `POLLINATIONS_VOICE` to choose a different Pollinations voice preset.
 3. Start the server:
    ```bash
@@ -42,7 +43,7 @@ A lightweight Node + Twilio companion service that lets Unity call a phone numbe
    ```
 5. Update `PUBLIC_SERVER_URL` in your `.env` with the HTTPS forwarding address printed by ngrok and restart the server if needed.
 
-Visit [http://localhost:4000](http://localhost:4000) to load the dashboard, enter a phone number, and press **Call My Phone**. Answer the incoming call from your Twilio number to begin the voice chat.
+Set `ALLOWED_ORIGIN` in your `.env` to the URL where the Unity chat frontend is hosted (for example your GitHub Pages domain). The server exposes a JSON API that the frontend uses; there is no bundled dashboard.
 
 ## Twilio configuration tips
 
@@ -67,7 +68,7 @@ Each assistant reply is constrained to a short length so the Pollinations TTS GE
 
 - Sessions are stored in memory. Restarting the server will drop active conversations.
 - If the Pollinations API or TTS call fails, the server gracefully ends the phone call to avoid trapping the caller.
-- The UI keeps an activity log and status banner so you can monitor attempts and errors from the browser.
+- When triggered from the Unity Chat frontend you will see status updates inside the Settings panel of the web app.
 
 ## Troubleshooting
 

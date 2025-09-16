@@ -3,6 +3,7 @@ const twilio = require('twilio');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const dotenv = require('dotenv');
+const cors = require('cors');
 
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
@@ -17,6 +18,7 @@ const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
 const DEFAULT_VOICE = process.env.POLLINATIONS_VOICE || 'nova';
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN;
 
 const hasTwilioCredentials =
   Boolean(TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_PHONE_NUMBER);
@@ -27,12 +29,14 @@ if (!hasTwilioCredentials) {
 if (!PUBLIC_SERVER_URL) {
   console.warn('[WARN] PUBLIC_SERVER_URL is not set. Twilio callbacks will fail without a public URL.');
 }
+if (!ALLOWED_ORIGIN) {
+  console.warn('[WARN] ALLOWED_ORIGIN is not set. Defaulting to allow requests from any origin.');
+}
 
 const app = express();
+app.use(cors({ origin: ALLOWED_ORIGIN || '*', methods: ['GET', 'POST', 'OPTIONS'] }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-app.use(express.static(path.join(__dirname, 'public')));
 
 const sessions = new Map();
 
@@ -230,6 +234,10 @@ async function handleVoiceResponse(req, res) {
 
 app.post('/voice-response', handleVoiceResponse);
 app.get('/voice-response', handleVoiceResponse);
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
 app.post('/gather', async (req, res) => {
   const { session, errorTwiml } = getSession(req);
