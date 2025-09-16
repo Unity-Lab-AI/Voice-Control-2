@@ -1,0 +1,13 @@
+{
+  "name": "unity-copilot-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static Windows 11 style Pollinations chat workspace for GitHub Pages.",
+  "scripts": {
+    "test": "node scripts/validate.js",
+    "build": "node scripts/build.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

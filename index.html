@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Unity Copilot Studio</title>
+    <meta
+      name="description"
+      content="A Windows 11 2025 inspired Pollinations AI chat workspace with model, voice, and theme controls."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="theme-light">
+    <div class="wallpaper"></div>
+    <div class="desktop-shell">
+      <header class="taskbar" aria-label="Desktop status bar">
+        <div class="taskbar-left">
+          <span class="taskbar-logo" aria-hidden="true">◎</span>
+          <span class="taskbar-title">Unity Copilot Studio</span>
+        </div>
+        <div class="taskbar-right">
+          <span class="taskbar-indicator" id="connectionStatus" aria-live="polite">Idle</span>
+          <span class="taskbar-clock" id="taskbarClock">--:--</span>
+        </div>
+      </header>
+
+      <main class="window glass" role="main" aria-label="Unity Copilot Studio workspace">
+        <div class="window-header">
+          <div class="window-title">
+            <div class="title-icon" aria-hidden="true">🪟</div>
+            <div>
+              <h1>Unity Copilot Studio</h1>
+              <p>Windows 11 2025 experience for Pollinations conversations</p>
+            </div>
+          </div>
+          <div class="window-controls" aria-hidden="true">
+            <button type="button" class="window-button" title="Minimize"></button>
+            <button type="button" class="window-button" title="Maximize"></button>
+            <button type="button" class="window-button close" title="Close"></button>
+          </div>
+        </div>
+
+        <div class="window-body">
+          <aside class="control-pane" aria-label="Conversation controls">
+            <section class="panel">
+              <h2>Configuration</h2>
+              <label class="input-group">
+                <span>Text model</span>
+                <select id="modelSelect" aria-label="Pollinations text model"></select>
+              </label>
+              <label class="input-group">
+                <span>Voice</span>
+                <select id="voiceSelect" aria-label="Voice for text-to-speech"></select>
+              </label>
+              <label class="input-group">
+                <span>Theme</span>
+                <select id="themeSelect" aria-label="Interface theme">
+                  <option value="theme-light">Daylight</option>
+                  <option value="theme-dark">Aurora Dark</option>
+                  <option value="theme-amoled">Nightfall AMOLED</option>
+                </select>
+              </label>
+              <div class="input-group toggle">
+                <label for="memoryToggle">Memory sync</label>
+                <input type="checkbox" id="memoryToggle" checked aria-label="Allow assistant to store memories" />
+              </div>
+            </section>
+
+            <section class="panel">
+              <h2>Session snapshot</h2>
+              <dl class="session-meta">
+                <div>
+                  <dt>Model</dt>
+                  <dd id="modelBadge">&mdash;</dd>
+                </div>
+                <div>
+                  <dt>Voice</dt>
+                  <dd id="voiceBadge">&mdash;</dd>
+                </div>
+                <div>
+                  <dt>Theme</dt>
+                  <dd id="themeBadge">Daylight</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section class="panel memories-panel">
+              <div class="panel-header">
+                <h2>Saved memories</h2>
+                <button type="button" id="clearMemories" class="ghost-button">Clear</button>
+              </div>
+              <p class="panel-help">
+                Memories guide future replies. The latest entries are automatically attached to requests.
+              </p>
+              <ol id="memoryList" class="memory-list" aria-live="polite"></ol>
+            </section>
+          </aside>
+
+          <section class="chat-pane" aria-label="Conversation thread">
+            <div class="chat-log" id="chatLog" role="log" aria-live="polite"></div>
+            <form id="composer" class="composer" autocomplete="off">
+              <label for="messageInput" class="sr-only">Message</label>
+              <textarea
+                id="messageInput"
+                rows="1"
+                placeholder="Type a message to Pollinations..."
+                aria-label="Message input"
+                required
+              ></textarea>
+              <div class="composer-footer">
+                <span id="charCounter">0 characters</span>
+                <div class="composer-actions">
+                  <button type="button" class="ghost-button" id="resetChat">Reset</button>
+                  <button type="submit" id="sendButton" class="primary-button">Send</button>
+                </div>
+              </div>
+            </form>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" integrity="sha384-i2RImOSGgPizxgxYkWwaP42gnikIze8ih/7gToYtL6vhfVqlhK/SXGEdq8np5xpo" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js" integrity="sha384-JCJhkm1b4GPRW6K5YnlNdd+y9QNFuIBqmoeZaZX6mE6xPD58Ll35H5TADaBrZEcD" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" crossorigin="anonymous"></script>
+    <script src="script.js" defer></script>
+  </body>
+</html>
