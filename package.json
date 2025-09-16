@@ -1,7 +1,7 @@
 {
   "name": "voice-control-2",
   "version": "1.0.0",
-  "description": "Voice controlled chat interface",
+  "description": "Pollinations Unity call-me static bridge with Twilio integration",
   "scripts": {
     "start": "http-server -c-1 .",
     "test": "node tests/app-operations.test.js"
