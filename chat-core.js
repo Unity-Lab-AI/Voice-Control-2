@@ -556,7 +556,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const res = await window.pollinationsFetch("https://text.pollinations.ai/openai", {
+            const apiUrl = new URL("https://text.pollinations.ai/openai");
+            apiUrl.searchParams.set("model", model);
+            const res = await window.pollinationsFetch(apiUrl.toString(), {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Accept: "application/json" },
                 body: JSON.stringify({ model, messages })

@@ -4,7 +4,7 @@
   "description": "Voice controlled chat interface",
   "scripts": {
     "start": "http-server -c-1 .",
-    "test": "echo \"No tests specified\""
+    "test": "node --test tests"
   },
   "devDependencies": {
     "http-server": "^14.1.1"

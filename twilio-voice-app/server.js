@@ -3,6 +3,13 @@ const twilio = require('twilio');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const dotenv = require('dotenv');
+const {
+  DEFAULT_TEXT_MODEL: BASE_TEXT_MODEL,
+  DEFAULT_TTS_MODEL: BASE_TTS_MODEL,
+  createTtsUrl,
+  buildOpenAiUrl,
+  createOpenAiPayload
+} = require('./pollinations-utils');
 
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
@@ -17,6 +24,8 @@ const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
 const DEFAULT_VOICE = process.env.POLLINATIONS_VOICE || 'nova';
+const DEFAULT_TEXT_MODEL = process.env.POLLINATIONS_TEXT_MODEL || BASE_TEXT_MODEL;
+const DEFAULT_TTS_MODEL = process.env.POLLINATIONS_TTS_MODEL || BASE_TTS_MODEL;
 
 const hasTwilioCredentials =
   Boolean(TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_PHONE_NUMBER);
@@ -44,39 +53,15 @@ const client = hasTwilioCredentials
   ? twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
   : null;
 
-function sanitizeForTts(text) {
-  if (!text) return '';
-  const compact = text.replace(/\s+/g, ' ').trim();
-  if (compact.length <= 380) return compact;
-  return `${compact.slice(0, 377)}...`;
-}
-
-function createTtsUrl(text, voice = DEFAULT_VOICE) {
-  const sanitized = sanitizeForTts(text);
-  const encoded = encodeURIComponent(sanitized);
-  const url = new URL(`https://text.pollinations.ai/${encoded}`);
-  url.searchParams.set('model', 'openai-audio');
-  url.searchParams.set('voice', voice);
-  return url.toString();
-}
-
 async function fetchPollinationsResponse(session, userMessage) {
   if (userMessage && userMessage.trim()) {
     session.messages.push({ role: 'user', content: userMessage.trim() });
   }
 
-  const payload = {
-    model: 'openai',
-    messages: session.messages,
-    temperature: 0.8,
-    max_output_tokens: 300,
-    top_p: 0.95,
-    presence_penalty: 0,
-    frequency_penalty: 0,
-    stream: false
-  };
+  const sessionModel = session.model || DEFAULT_TEXT_MODEL;
+  const payload = createOpenAiPayload(session.messages, { model: sessionModel });
 
-  const response = await fetchImpl('https://text.pollinations.ai/openai', {
+  const response = await fetchImpl(buildOpenAiUrl(sessionModel), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -98,12 +83,13 @@ async function fetchPollinationsResponse(session, userMessage) {
   return assistantMessage;
 }
 
-function createSession(phoneNumber, initialVoice = DEFAULT_VOICE) {
+function createSession(phoneNumber, initialVoice = DEFAULT_VOICE, initialModel = DEFAULT_TEXT_MODEL) {
   const id = uuidv4();
   const session = {
     id,
     phoneNumber,
     voice: initialVoice,
+    model: initialModel,
     messages: [{ role: 'system', content: SYSTEM_PROMPT }],
     lastAssistant: null
   };
@@ -123,7 +109,7 @@ function buildVoiceResponse(session, twiml, promptMessage, gatherPrompt) {
     return twiml;
   }
 
-  const audioUrl = createTtsUrl(responseMessage, session.voice);
+  const audioUrl = createTtsUrl(responseMessage, session.voice, { model: DEFAULT_TTS_MODEL });
   twiml.play(audioUrl);
 
   const gather = twiml.gather({
@@ -167,7 +153,7 @@ async function startPhoneCall(session) {
 
 app.post('/api/start-call', async (req, res) => {
   try {
-    const { phoneNumber, initialPrompt, voice } = req.body || {};
+    const { phoneNumber, initialPrompt, voice, model } = req.body || {};
     if (!phoneNumber || typeof phoneNumber !== 'string') {
       return res.status(400).json({ error: 'A destination phoneNumber is required.' });
     }
@@ -178,7 +164,7 @@ app.post('/api/start-call', async (req, res) => {
       return res.status(500).json({ error: 'PUBLIC_SERVER_URL is not configured on the server.' });
     }
 
-    const session = createSession(phoneNumber.trim(), voice || DEFAULT_VOICE);
+    const session = createSession(phoneNumber.trim(), voice || DEFAULT_VOICE, model || DEFAULT_TEXT_MODEL);
     const gatherPrompt = 'After the message, speak your reply and stay on the line for the assistant to respond.';
 
     if (initialPrompt && initialPrompt.trim()) {
@@ -269,6 +255,31 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error.' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Twilio voice bridge listening on port ${PORT}`);
-});
+function startServer(port = PORT) {
+  return app.listen(port, () => {
+    console.log(`Twilio voice bridge listening on port ${port}`);
+  });
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = {
+  app,
+  startServer,
+  fetchPollinationsResponse,
+  createSession,
+  buildGatherAction,
+  buildVoiceResponse,
+  startPhoneCall,
+  getSession,
+  sessions,
+  hasTwilioCredentials,
+  DEFAULT_VOICE,
+  DEFAULT_TEXT_MODEL,
+  DEFAULT_TTS_MODEL,
+  buildOpenAiUrl,
+  createOpenAiPayload,
+  createTtsUrl
+};
