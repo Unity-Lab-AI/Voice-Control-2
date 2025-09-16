@@ -9,80 +9,66 @@ const html = fs.readFileSync(htmlPath, 'utf8');
 const dom = new JSDOM(html);
 const { document } = dom.window;
 
-function getElement(selector) {
-  const element = document.querySelector(selector);
-  assert.ok(element, `Expected to find element matching selector "${selector}"`);
-  return element;
+function getEl(selector) {
+  const el = document.querySelector(selector);
+  assert.ok(el, `Expected to find element matching selector "${selector}"`);
+  return el;
 }
 
-function getById(id) {
-  const element = document.getElementById(id);
-  assert.ok(element, `Expected to find element with id "${id}"`);
-  return element;
-}
+// Structural checks
+const form = getEl('#call-form');
+assert.strictEqual(form.tagName, 'FORM');
 
-function expectButton(id) {
-  const el = getById(id);
-  assert.strictEqual(el.tagName, 'BUTTON', `Expected #${id} to be a <button>`);
-  assert.ok(el.textContent.trim().length > 0 || el.querySelector('i'), `Expected #${id} button to have text or an icon`);
-}
+const phone = getEl('#phone-number');
+assert.strictEqual(phone.getAttribute('type'), 'tel');
 
-function expectSelect(id) {
-  const el = getById(id);
-  assert.strictEqual(el.tagName, 'SELECT', `Expected #${id} to be a <select>`);
-}
+const modelSelect = getEl('#model-select');
+assert.strictEqual(modelSelect.tagName, 'SELECT');
 
-// Core layout containers
-getById('screensaver-container');
-getById('chat-box');
-const chatInput = getById('chat-input');
-assert.strictEqual(chatInput.tagName, 'TEXTAREA', 'Chat input should be a textarea to support multiline typing');
-expectButton('send-button');
-getById('session-list');
-getById('visitor-count-display');
-expectSelect('model-select');
-expectSelect('theme-select');
-expectSelect('voice-select');
-expectButton('toggle-screensaver');
-expectButton('open-personalization-btn');
-expectButton('open-settings-btn');
-expectButton('toggle-simple-mode');
-expectButton('donation-open-btn');
-expectButton('voice-toggle');
-expectButton('open-voice-settings-modal');
-expectButton('voice-chat-toggle');
-expectButton('shut-up-btn');
-expectButton('clear-chat');
+const voiceSelect = getEl('#voice-select');
+assert.strictEqual(voiceSelect.tagName, 'SELECT');
 
-// Screensaver controls
-expectButton('screensaver-playpause');
-expectButton('fullscreen-screensaver');
-expectButton('screensaver-hide');
-expectButton('screensaver-save');
-expectButton('screensaver-copy');
-expectButton('screensaver-restart-prompt');
-expectButton('screensaver-exit');
-getById('screensaver-prompt');
-getById('screensaver-timer');
-getById('screensaver-aspect');
-getById('screensaver-model');
-getById('screensaver-transition-duration');
-getById('screensaver-enhance');
-getById('screensaver-private');
+const silence = getEl('#silence-threshold');
+assert.strictEqual(silence.getAttribute('type'), 'number');
 
-// Ensure critical scripts are part of the final page payload
-const scriptSrcs = Array.from(document.querySelectorAll('script[src]'), (el) => el.getAttribute('src'));
-[
-  'screensaver.js',
-  'storage.js',
-  'memory-api.js',
-  'chat-core.js',
-  'ui.js',
-  'chat-storage.js',
-  'chat-init.js',
-  'simple.js'
-].forEach((src) => {
-  assert.ok(scriptSrcs.includes(src), `Expected script ${src} to be referenced by index.html`);
-});
+const timeout = getEl('#no-input-timeout');
+assert.strictEqual(timeout.getAttribute('type'), 'number');
 
-console.log('✅ Application UI structure and critical script references verified.');
+const callButton = getEl('#call-button');
+assert.strictEqual(callButton.tagName, 'BUTTON');
+assert.ok(callButton.classList.contains('primary'));
+
+const resetButton = getEl('#reset-button');
+assert.strictEqual(resetButton.tagName, 'BUTTON');
+assert.strictEqual(resetButton.getAttribute('type'), 'reset');
+
+// Status + preview panels
+const status = getEl('#status-indicator');
+assert.ok(status.classList.contains('status-indicator'));
+
+const modelDisplay = getEl('#selected-model');
+const voiceDisplay = getEl('#selected-voice');
+assert.strictEqual(modelDisplay.textContent.trim(), '—');
+assert.strictEqual(voiceDisplay.textContent.trim(), '—');
+
+const eventLog = getEl('#event-log');
+assert.strictEqual(eventLog.tagName, 'OL');
+
+const plan = getEl('#call-plan');
+assert.strictEqual(plan.tagName, 'TEXTAREA');
+assert.ok(plan.hasAttribute('readonly'));
+
+const twiml = getEl('#twiml-preview');
+assert.strictEqual(twiml.tagName, 'TEXTAREA');
+assert.ok(twiml.hasAttribute('readonly'));
+
+// Script references
+const scripts = Array.from(document.querySelectorAll('script'));
+const configScript = scripts.find((script) => script.id === 'app-config');
+assert.ok(configScript, 'Expected a script with id="app-config" to be present');
+
+const moduleScript = scripts.find((script) => script.getAttribute('src') === 'app.js');
+assert.ok(moduleScript, 'Expected index.html to include app.js');
+assert.strictEqual(moduleScript.getAttribute('type'), 'module');
+
+console.log('✅ Unity Call Me static UI validated');
