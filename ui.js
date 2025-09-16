@@ -30,6 +30,179 @@ document.addEventListener("DOMContentLoaded", () => {
     const clearChatSessionsBtn = document.getElementById("clear-chat-sessions-btn");
     const clearUserDataBtn = document.getElementById("clear-user-data-btn");
     const toggleSimpleModeBtn = document.getElementById("toggle-simple-mode");
+    const twilioServerInput = document.getElementById("twilio-server-url");
+    const twilioPhoneInput = document.getElementById("twilio-phone-number");
+    const twilioPromptInput = document.getElementById("twilio-initial-prompt");
+    const twilioVoiceSelect = document.getElementById("twilio-voice-select");
+    const twilioCallBtn = document.getElementById("twilio-start-call-btn");
+    const twilioStatusEl = document.getElementById("twilio-call-status");
+
+    const twilioStorageKeys = {
+        server: "unityTwilioServerUrl",
+        phone: "unityTwilioPhoneNumber",
+        prompt: "unityTwilioInitialPrompt",
+        voice: "unityTwilioVoice"
+    };
+
+    function sanitizeServerUrl(value) {
+        if (!value) return "";
+        return value.trim().replace(/\/+$/, "");
+    }
+
+    function persistValue(key, value) {
+        if (!key) return;
+        const trimmed = typeof value === "string" ? value.trim() : value;
+        if (trimmed) {
+            localStorage.setItem(key, trimmed);
+        } else {
+            localStorage.removeItem(key);
+        }
+    }
+
+    function updateTwilioStatus(message, state = "idle") {
+        if (!twilioStatusEl) return;
+        twilioStatusEl.textContent = message;
+        twilioStatusEl.dataset.state = state;
+    }
+
+    if (twilioStatusEl) {
+        updateTwilioStatus("Ready to place a call. Enter your server URL and phone number, then press Call My Phone.");
+    }
+
+    if (twilioServerInput) {
+        const storedServer = localStorage.getItem(twilioStorageKeys.server);
+        if (storedServer) {
+            twilioServerInput.value = storedServer;
+        }
+        twilioServerInput.addEventListener("change", () => {
+            const normalized = sanitizeServerUrl(twilioServerInput.value);
+            twilioServerInput.value = normalized;
+            persistValue(twilioStorageKeys.server, normalized);
+        });
+    }
+
+    if (twilioPhoneInput) {
+        const storedPhone = localStorage.getItem(twilioStorageKeys.phone);
+        if (storedPhone) {
+            twilioPhoneInput.value = storedPhone;
+        }
+        twilioPhoneInput.addEventListener("change", () => {
+            persistValue(twilioStorageKeys.phone, twilioPhoneInput.value);
+        });
+        twilioPhoneInput.addEventListener("blur", () => {
+            persistValue(twilioStorageKeys.phone, twilioPhoneInput.value);
+        });
+    }
+
+    if (twilioPromptInput) {
+        const storedPrompt = localStorage.getItem(twilioStorageKeys.prompt);
+        if (storedPrompt) {
+            twilioPromptInput.value = storedPrompt;
+        }
+        twilioPromptInput.addEventListener("change", () => {
+            persistValue(twilioStorageKeys.prompt, twilioPromptInput.value);
+        });
+        twilioPromptInput.addEventListener("blur", () => {
+            persistValue(twilioStorageKeys.prompt, twilioPromptInput.value);
+        });
+    }
+
+    if (twilioVoiceSelect) {
+        const storedVoice = localStorage.getItem(twilioStorageKeys.voice) || "nova";
+        twilioVoiceSelect.value = storedVoice;
+        twilioVoiceSelect.addEventListener("change", () => {
+            persistValue(twilioStorageKeys.voice, twilioVoiceSelect.value);
+        });
+    }
+
+    async function startTwilioCall() {
+        if (!twilioCallBtn || !twilioServerInput || !twilioPhoneInput) return;
+
+        const rawServerUrl = sanitizeServerUrl(twilioServerInput.value);
+        if (!rawServerUrl) {
+            updateTwilioStatus("Enter the full HTTPS URL of your voice bridge server.", "error");
+            twilioServerInput.focus();
+            if (window.showToast) window.showToast("Voice bridge URL is required.");
+            return;
+        }
+
+        let parsedUrl;
+        try {
+            parsedUrl = new URL(rawServerUrl);
+        } catch (err) {
+            updateTwilioStatus("The voice bridge URL is not valid. Double-check the format.", "error");
+            if (window.showToast) window.showToast("Provide a valid HTTPS URL for the voice bridge.");
+            return;
+        }
+
+        if (parsedUrl.protocol !== "https:" && parsedUrl.hostname !== "localhost") {
+            updateTwilioStatus("Use an HTTPS URL so Twilio can reach your server.", "error");
+            if (window.showToast) window.showToast("HTTPS is required unless you are testing on localhost.");
+            return;
+        }
+
+        const phoneNumber = (twilioPhoneInput.value || "").trim();
+        if (!phoneNumber) {
+            updateTwilioStatus("Enter the destination phone number in E.164 format.", "error");
+            twilioPhoneInput.focus();
+            if (window.showToast) window.showToast("Phone number is required.");
+            return;
+        }
+
+        const initialPrompt = twilioPromptInput ? twilioPromptInput.value.trim() : "";
+        const voice = twilioVoiceSelect ? twilioVoiceSelect.value : "nova";
+
+        persistValue(twilioStorageKeys.server, rawServerUrl);
+        persistValue(twilioStorageKeys.phone, phoneNumber);
+        persistValue(twilioStorageKeys.prompt, initialPrompt);
+        persistValue(twilioStorageKeys.voice, voice);
+
+        const endpoint = `${rawServerUrl}/api/start-call`;
+        updateTwilioStatus("Contacting the voice bridge…", "pending");
+        twilioCallBtn.disabled = true;
+
+        try {
+            let response;
+            try {
+                response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ phoneNumber, initialPrompt, voice })
+                });
+            } catch (networkError) {
+                throw new Error("Could not reach the voice bridge server. Check the URL and network connection.");
+            }
+
+            let data = {};
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                data = {};
+            }
+
+            if (!response.ok) {
+                const errMessage = data.error || `Server responded with status ${response.status}.`;
+                throw new Error(errMessage);
+            }
+
+            const successMessage = data.message || "Call started. Answer your phone to chat with Unity.";
+            updateTwilioStatus(successMessage, "success");
+            if (window.showToast) window.showToast("Unity is calling your phone now!");
+        } catch (error) {
+            const message = error && error.message ? error.message : "Failed to start the call.";
+            updateTwilioStatus(message, "error");
+            console.error("Failed to start Twilio call", error);
+            if (window.showToast) window.showToast(message);
+        } finally {
+            twilioCallBtn.disabled = false;
+        }
+    }
+
+    if (twilioCallBtn) {
+        twilioCallBtn.addEventListener("click", () => {
+            startTwilioCall();
+        });
+    }
 
     let themeLinkElement = document.getElementById("theme-link");
     if (!themeLinkElement) {
