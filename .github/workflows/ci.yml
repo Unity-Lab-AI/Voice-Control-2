@@ -1,4 +1,6 @@
+
 name: Build and test
+
 
 on:
   push:
@@ -16,6 +18,7 @@ jobs:
       CI: true
     steps:
       - name: Checkout
+
         uses: actions/checkout@v4
 
       - name: Setup Node.js

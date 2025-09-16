@@ -5,6 +5,7 @@
   "scripts": {
     "start": "http-server -c-1 .",
     "test": "vitest run"
+
   },
   "devDependencies": {
     "http-server": "^14.1.1",
