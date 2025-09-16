@@ -11,50 +11,10 @@ const STORAGE_KEYS = {
 const API_ENDPOINT = 'https://text.pollinations.ai/openai';
 const MODELS_ENDPOINT = 'https://text.pollinations.ai/models';
 const API_REFERRER = 'www.unityailab.com';
-const LOCAL_MODELS_PATH = 'data/models.json';
 
 const API_SEED_LENGTH = 8;
 let cryptoSeedWarningLogged = false;
 
-const FALLBACK_MODELS = [
-  {
-    id: 'openai',
-    label: 'OpenAI (GPT-4o mini)',
-    description: 'Pollinations gateway to GPT-4o mini for general creative work.',
-    tier: 'seed',
-    voices: ['alloy', 'nova', 'shimmer']
-  },
-  {
-    id: 'mistral',
-    label: 'Mistral',
-    description: 'Fast multilingual model tuned for product copy and ideation.',
-    tier: 'seed',
-    voices: ['alloy', 'fable']
-  },
-  {
-    id: 'llama',
-    label: 'LLaMA Fusion',
-    description: 'Community LLaMA fusion with extended context for research assistance.',
-    tier: 'community',
-    voices: ['echo', 'onyx']
-  },
-  {
-    id: 'deepseek',
-    label: 'DeepSeek',
-    description: 'Analytical reasoning model great for summarising and planning.',
-    tier: 'seed',
-    voices: ['echo', 'shimmer']
-  },
-  {
-    id: 'claude-hybridspace',
-    label: 'Claude HybridSpace',
-    description: 'Anthropic Claude via Pollinations for thoughtful long-form answers.',
-    tier: 'growth',
-    voices: ['nova', 'fable']
-  }
-];
-
-const FALLBACK_VOICES = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
 
 function sanitizeToken(value) {
   if (typeof value !== 'string') {
@@ -192,8 +152,8 @@ const state = {
   aiInstruct: '',
   history: [],
   memories: [],
-  selectedModel: FALLBACK_MODELS[0].id,
-  selectedVoice: FALLBACK_VOICES[0],
+  selectedModel: '',
+  selectedVoice: '',
   selectedTheme: DEFAULT_THEME_ID,
   memoryEnabled: true,
   isSending: false,
@@ -228,45 +188,47 @@ const formatters = {
 };
 
 function buildGatewayUrl(model, options = {}) {
-  const url = new URL(API_ENDPOINT);
+  const params = new URLSearchParams();
+  const trimmedModel = typeof model === 'string' ? model.trim() : '';
 
-  if (model) {
-    url.searchParams.set('model', model);
-  }
-
-  if (API_REFERRER) {
-    url.searchParams.set('referrer', API_REFERRER);
-    url.searchParams.set('referer', API_REFERRER);
-  }
-
-  if (API_TOKEN) {
-    url.searchParams.set('token', API_TOKEN);
+  if (trimmedModel) {
+    params.append('model', trimmedModel);
   }
 
   const seedOverride = typeof options.seed === 'string' ? options.seed.trim() : '';
   const seedValue = seedOverride || generateSeed();
-  url.searchParams.set('seed', seedValue);
+  params.append('seed', seedValue);
 
-  return url.toString();
-}
-
-function buildModelsUrl(model) {
-  const url = new URL(MODELS_ENDPOINT);
-
-  if (model) {
-    url.searchParams.set('model', model);
+  if (API_TOKEN) {
+    params.append('token', API_TOKEN);
   }
 
   if (API_REFERRER) {
-    url.searchParams.set('referrer', API_REFERRER);
-    url.searchParams.set('referer', API_REFERRER);
+    params.append('referer', API_REFERRER);
+  }
+
+  const query = params.toString();
+  return query ? `${API_ENDPOINT}?${query}` : API_ENDPOINT;
+}
+
+function buildModelsUrl(model) {
+  const params = new URLSearchParams();
+  const trimmedModel = typeof model === 'string' ? model.trim() : '';
+
+  if (trimmedModel) {
+    params.append('model', trimmedModel);
   }
 
   if (API_TOKEN) {
-    url.searchParams.set('token', API_TOKEN);
+    params.append('token', API_TOKEN);
   }
 
-  return url.toString();
+  if (API_REFERRER) {
+    params.append('referer', API_REFERRER);
+  }
+
+  const query = params.toString();
+  return query ? `${MODELS_ENDPOINT}?${query}` : MODELS_ENDPOINT;
 }
 
 function resolveThemeId(value) {
@@ -492,12 +454,20 @@ function populateSelect(select, options, selectedValue, { includeMeta = false } 
   });
 }
 
+function updateComposerAvailability() {
+  if (!elements.sendButton) return;
+  const hasSelectedModel = state.availableModels.some((model) => model.id === state.selectedModel);
+  const canSend = hasSelectedModel && !state.isSending;
+  elements.sendButton.disabled = !canSend;
+}
+
 function createModelEntry(id, details = {}) {
-  if (!id) return null;
+  const normalizedId = typeof id === 'string' ? id.trim() : '';
+  if (!normalizedId) return null;
 
   const friendlyName = (details.description || details.title || details.label || details.name || '').trim();
-  const includesId = friendlyName && friendlyName.toLowerCase().includes(String(id).toLowerCase());
-  const label = friendlyName ? (includesId ? friendlyName : `${friendlyName} (${id})`) : id;
+  const includesId = friendlyName && friendlyName.toLowerCase().includes(normalizedId.toLowerCase());
+  const label = friendlyName ? (includesId ? friendlyName : `${friendlyName} (${normalizedId})`) : normalizedId;
   const tier = details.tier || (details.community ? 'community' : '');
   const voices = Array.isArray(details.voices)
     ? details.voices
@@ -512,7 +482,7 @@ function createModelEntry(id, details = {}) {
   const supportsText = !outputModalities.length || outputModalities.includes('text');
 
   return {
-    id,
+    id: normalizedId,
     label,
     description: friendlyName,
     tier,
@@ -523,7 +493,7 @@ function createModelEntry(id, details = {}) {
 
 function normalizeModelPayload(payload) {
   const modelMap = new Map();
-  const voices = new Set(FALLBACK_VOICES);
+  const voices = new Set();
 
   const appendModel = (entry) => {
     if (!entry || modelMap.has(entry.id)) return;
@@ -550,12 +520,6 @@ function normalizeModelPayload(payload) {
     });
   }
 
-  if (!modelMap.size) {
-    FALLBACK_MODELS.forEach((fallback) => {
-      appendModel(createModelEntry(fallback.id, fallback));
-    });
-  }
-
   const models = Array.from(modelMap.values()).sort((a, b) =>
     a.label.localeCompare(b.label, undefined, { sensitivity: 'base' })
   );
@@ -564,36 +528,7 @@ function normalizeModelPayload(payload) {
   return { models, voices: voiceList };
 }
 
-async function loadLocalModelCatalog() {
-  try {
-    const response = await fetch(LOCAL_MODELS_PATH, { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error(`Status ${response.status}`);
-    }
-    const data = await response.json();
-    const payload = Array.isArray(data?.models) ? data.models : data;
-    const normalized = normalizeModelPayload(payload);
-
-    if (normalized && Array.isArray(data?.voices)) {
-      const voiceSet = new Set([...(normalized.voices || []), ...data.voices]);
-      normalized.voices = Array.from(voiceSet).sort((a, b) =>
-        a.localeCompare(b, undefined, { sensitivity: 'base' })
-      );
-    }
-
-    return normalized;
-  } catch (error) {
-    console.warn('Unable to load bundled model catalog', error.message || error);
-    return null;
-  }
-}
-
 async function fetchModels() {
-  const localCatalog = await loadLocalModelCatalog();
-  if (localCatalog?.models?.length) {
-    return localCatalog;
-  }
-
   try {
     const response = await fetch(buildModelsUrl(state.selectedModel), { cache: 'no-store' });
     if (!response.ok) {
@@ -602,23 +537,24 @@ async function fetchModels() {
     const data = await response.json();
     return normalizeModelPayload(data);
   } catch (error) {
-    console.warn('Falling back to predefined models', error);
-    return normalizeModelPayload(
-      FALLBACK_MODELS.map((model) => ({ id: model.id, label: model.label }))
-    );
+    console.error('Unable to load Pollinations model catalog', error);
+    throw error;
   }
 }
 
 function updateSessionSnapshot() {
   const selectedModelOption = state.availableModels.find((m) => m.id === state.selectedModel);
   if (elements.modelBadge) {
-    const modelLabel = selectedModelOption?.label || state.selectedModel;
+    const modelLabel = selectedModelOption?.label || state.selectedModel || '—';
+    const modelTitle =
+      selectedModelOption?.description || selectedModelOption?.label || state.selectedModel || 'No model selected';
     elements.modelBadge.textContent = modelLabel;
-    elements.modelBadge.title = selectedModelOption?.description || modelLabel;
+    elements.modelBadge.title = modelTitle;
   }
   if (elements.voiceBadge) {
-    elements.voiceBadge.textContent = state.selectedVoice;
-    elements.voiceBadge.title = state.selectedVoice;
+    const voiceLabel = state.selectedVoice || '—';
+    elements.voiceBadge.textContent = voiceLabel;
+    elements.voiceBadge.title = state.selectedVoice ? state.selectedVoice : 'No voice selected';
   }
   if (elements.themeBadge) {
     const theme = findThemeById(state.selectedTheme);
@@ -626,6 +562,7 @@ function updateSessionSnapshot() {
     elements.themeBadge.textContent = themeLabel;
     elements.themeBadge.title = theme?.description || themeLabel;
   }
+  updateComposerAvailability();
 }
 
 function renderMemories() {
@@ -836,13 +773,13 @@ function handleThemeChange(event) {
 }
 
 function handleModelChange(event) {
-  state.selectedModel = event.target.value;
+  state.selectedModel = event.target.value?.trim?.() || '';
   updateSessionSnapshot();
   persistState();
 }
 
 function handleVoiceChange(event) {
-  state.selectedVoice = event.target.value;
+  state.selectedVoice = event.target.value?.trim?.() || '';
   updateSessionSnapshot();
   persistState();
 }
@@ -892,17 +829,31 @@ function buildSystemPrompt() {
 
 function buildPayload() {
   const historySlice = state.history.slice(-10).map(({ role, content }) => ({ role, content }));
-  return {
+  const payload = {
     model: state.selectedModel,
-    voice: state.selectedVoice,
     private: true,
     messages: [{ role: 'system', content: buildSystemPrompt() }, ...historySlice]
   };
+
+  if (state.selectedVoice) {
+    payload.voice = state.selectedVoice;
+  }
+
+  return payload;
 }
 
 async function sendMessage(event) {
   event.preventDefault();
   if (state.isSending) return;
+
+  const hasSelectedModel = Boolean(
+    state.selectedModel && state.availableModels.some((model) => model.id === state.selectedModel)
+  );
+  if (!hasSelectedModel) {
+    showToast('Select a Pollinations model before sending.', 'error');
+    updateComposerAvailability();
+    return;
+  }
 
   const userInput = elements.messageInput.value.trim();
   if (!userInput) return;
@@ -923,7 +874,7 @@ async function sendMessage(event) {
   autoResizeTextarea();
 
   state.isSending = true;
-  elements.sendButton.disabled = true;
+  updateComposerAvailability();
   setConnectionStatus('Contacting Pollinations…', 'busy');
 
   try {
@@ -985,7 +936,7 @@ async function sendMessage(event) {
     persistState();
   } finally {
     state.isSending = false;
-    elements.sendButton.disabled = false;
+    updateComposerAvailability();
     if (elements.messageInput) {
       elements.messageInput.focus({ preventScroll: true });
     }
@@ -1001,6 +952,7 @@ function handleKeyboardSubmit(event) {
 
 async function initialize() {
   bindElements();
+  updateComposerAvailability();
   configureLibraries();
   initClock();
   loadStoredState();
@@ -1009,6 +961,8 @@ async function initialize() {
   setSelectPlaceholder(elements.modelSelect, 'Loading models…');
   setSelectPlaceholder(elements.voiceSelect, 'Loading voices…');
   setSelectPlaceholder(elements.themeSelect, 'Loading themes…');
+
+  setConnectionStatus('Loading models…', 'busy');
 
   applyTheme(state.selectedTheme);
 
@@ -1038,21 +992,61 @@ async function initialize() {
   populateSelect(elements.themeSelect, state.availableThemes, state.selectedTheme);
   applyTheme(state.selectedTheme);
 
-  const { models, voices } = await fetchModels();
+  let modelCatalog = { models: [], voices: [] };
+  let modelsLoaded = false;
+
+  try {
+    const fetchedCatalog = await fetchModels();
+    if (fetchedCatalog && typeof fetchedCatalog === 'object') {
+      modelCatalog = fetchedCatalog;
+    }
+    modelsLoaded = true;
+  } catch (error) {
+    console.error('Failed to load models from Pollinations', error);
+    setSelectPlaceholder(elements.modelSelect, 'Models unavailable');
+    setSelectPlaceholder(elements.voiceSelect, 'Voices unavailable');
+    setConnectionStatus('Unable to load models', 'error');
+  }
+
+  const models = Array.isArray(modelCatalog.models) ? modelCatalog.models : [];
+  const voices = Array.isArray(modelCatalog.voices) ? modelCatalog.voices : [];
   const textModels = models.filter((model) => model.supportsText !== false);
   state.availableModels = textModels.length ? textModels : models;
-  state.availableVoices = voices.length ? voices : [...FALLBACK_VOICES];
+  state.availableVoices = voices;
 
-  if (!state.availableModels.find((model) => model.id === state.selectedModel)) {
-    state.selectedModel = state.availableModels[0]?.id || state.selectedModel;
+  let shouldPersistPreferences = false;
+
+  if (!state.availableModels.some((model) => model.id === state.selectedModel)) {
+    const fallbackModel = state.availableModels[0]?.id || '';
+    if (state.selectedModel !== fallbackModel) {
+      state.selectedModel = fallbackModel;
+      shouldPersistPreferences = true;
+    }
   }
 
   if (!state.availableVoices.includes(state.selectedVoice)) {
-    state.selectedVoice = state.availableVoices[0] || state.selectedVoice;
+    const fallbackVoice = state.availableVoices[0] || '';
+    if (state.selectedVoice !== fallbackVoice) {
+      state.selectedVoice = fallbackVoice;
+      shouldPersistPreferences = true;
+    }
   }
 
-  populateSelect(elements.modelSelect, state.availableModels, state.selectedModel, { includeMeta: true });
-  populateSelect(elements.voiceSelect, state.availableVoices, state.selectedVoice);
+  if (shouldPersistPreferences) {
+    persistState();
+  }
+
+  if (state.availableModels.length) {
+    populateSelect(elements.modelSelect, state.availableModels, state.selectedModel, { includeMeta: true });
+  } else if (modelsLoaded) {
+    setSelectPlaceholder(elements.modelSelect, 'No models available');
+  }
+
+  if (state.availableVoices.length) {
+    populateSelect(elements.voiceSelect, state.availableVoices, state.selectedVoice);
+  } else if (modelsLoaded) {
+    setSelectPlaceholder(elements.voiceSelect, 'No voices available');
+  }
 
   elements.memoryToggle.checked = state.memoryEnabled;
 
@@ -1061,7 +1055,12 @@ async function initialize() {
   updateSessionSnapshot();
   updateCharCounter();
   autoResizeTextarea();
-  setConnectionStatus('Idle', 'idle');
+
+  if (state.availableModels.length) {
+    setConnectionStatus('Idle', 'idle');
+  } else if (modelsLoaded) {
+    setConnectionStatus('No models available', 'error');
+  }
 
   elements.modelSelect.addEventListener('change', handleModelChange);
   elements.voiceSelect.addEventListener('change', handleVoiceChange);
