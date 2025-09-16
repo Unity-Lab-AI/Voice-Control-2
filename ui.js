@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (twilioStatusEl) {
-        updateTwilioStatus("Ready to place a call. Enter your server URL and phone number, then press Call My Phone.");
+        updateTwilioStatus("Ready to place a call. Enter your server URL and phone number, or leave the URL blank to use the built-in GitHub Pages voice bridge.");
     }
 
     if (twilioServerInput) {
@@ -114,8 +114,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         twilioServerInput.addEventListener("change", () => {
             const normalized = sanitizeServerUrl(twilioServerInput.value);
-            twilioServerInput.value = normalized;
-            persistValue(twilioStorageKeys.server, normalized);
+            if (normalized) {
+                twilioServerInput.value = normalized;
+                persistValue(twilioStorageKeys.server, normalized);
+            } else {
+                twilioServerInput.value = "";
+                persistValue(twilioStorageKeys.server, "");
+            }
         });
     }
 
@@ -161,26 +166,32 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!twilioCallBtn || !twilioServerInput || !twilioPhoneInput) return;
 
         const rawServerUrl = sanitizeServerUrl(twilioServerInput.value);
-        if (!rawServerUrl) {
-            updateTwilioStatus("Enter the full HTTPS URL of your voice bridge server.", "error");
-            twilioServerInput.focus();
-            if (window.showToast) window.showToast("Voice bridge URL is required.");
-            return;
-        }
+        const usingBuiltInBridge = !rawServerUrl;
+        let serverBaseUrl = rawServerUrl;
 
-        let parsedUrl;
-        try {
-            parsedUrl = new URL(rawServerUrl);
-        } catch (err) {
-            updateTwilioStatus("The voice bridge URL is not valid. Double-check the format.", "error");
-            if (window.showToast) window.showToast("Provide a valid HTTPS URL for the voice bridge.");
-            return;
-        }
+        if (usingBuiltInBridge) {
+            const origin = (window.location && window.location.origin) ? window.location.origin.trim() : "";
+            if (!origin || !origin.startsWith("https://")) {
+                updateTwilioStatus("Built-in voice bridge is only available on HTTPS deployments. Provide your own server URL while developing locally.", "error");
+                if (window.showToast) window.showToast("Built-in voice bridge requires HTTPS hosting.");
+                return;
+            }
+            serverBaseUrl = `${origin.replace(/\/$/, "")}/_functions`;
+        } else {
+            let parsedUrl;
+            try {
+                parsedUrl = new URL(rawServerUrl);
+            } catch (err) {
+                updateTwilioStatus("The voice bridge URL is not valid. Double-check the format.", "error");
+                if (window.showToast) window.showToast("Provide a valid HTTPS URL for the voice bridge.");
+                return;
+            }
 
-        if (parsedUrl.protocol !== "https:" && parsedUrl.hostname !== "localhost") {
-            updateTwilioStatus("Use an HTTPS URL so Twilio can reach your server.", "error");
-            if (window.showToast) window.showToast("HTTPS is required unless you are testing on localhost.");
-            return;
+            if (parsedUrl.protocol !== "https:" && parsedUrl.hostname !== "localhost") {
+                updateTwilioStatus("Use an HTTPS URL so Twilio can reach your server.", "error");
+                if (window.showToast) window.showToast("HTTPS is required unless you are testing on localhost.");
+                return;
+            }
         }
 
         const phoneNumber = (twilioPhoneInput.value || "").trim();
@@ -194,13 +205,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const initialPrompt = twilioPromptInput ? twilioPromptInput.value.trim() : "";
         const voice = twilioVoiceSelect ? twilioVoiceSelect.value : "nova";
 
-        persistValue(twilioStorageKeys.server, rawServerUrl);
+        persistValue(twilioStorageKeys.server, usingBuiltInBridge ? "" : serverBaseUrl);
         persistValue(twilioStorageKeys.phone, phoneNumber);
         persistValue(twilioStorageKeys.prompt, initialPrompt);
         persistValue(twilioStorageKeys.voice, voice);
 
-        const endpoint = `${rawServerUrl}/api/start-call`;
-        updateTwilioStatus("Contacting the voice bridge…", "pending");
+        const normalizedBase = serverBaseUrl.replace(/\/$/, "");
+        const endpoint = `${normalizedBase}/api/start-call`;
+        updateTwilioStatus(usingBuiltInBridge ? "Contacting the built-in voice bridge…" : "Contacting the voice bridge…", "pending");
         twilioCallBtn.disabled = true;
 
         try {
