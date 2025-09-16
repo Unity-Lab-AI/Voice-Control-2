@@ -24,18 +24,53 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Injects an inline <script> that sets window.POLLINATIONS_TOKEN
-      - name: Inject Pollinations token into index.html
-        if: ${{ secrets.POLLINATIONS_TOKEN != '' }}
+      # Inject deployment secrets as window-scoped variables
+      - name: Inject deployment secrets into index.html
+        if: ${{ secrets.POLLINATIONS_TOKEN != '' || secrets.TWILIO_ACCOUNT_SID != '' || secrets.TWILIO_AUTH_TOKEN != '' || secrets.TWILIO_PHONE_NUMBER != '' }}
+        env:
+          POLLINATIONS_TOKEN: ${{ secrets.POLLINATIONS_TOKEN }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_PHONE_NUMBER: ${{ secrets.TWILIO_PHONE_NUMBER }}
         run: |
-          set -e
-          INJ="<script>window.POLLINATIONS_TOKEN='${{ secrets.POLLINATIONS_TOKEN }}';</script>"
-          if grep -qi "window.POLLINATIONS_TOKEN" index.html; then
-            sed -i "s|<script>window.POLLINATIONS_TOKEN.*</script>|$INJ|I" index.html
-          else
-            awk -v inj="$INJ" 'BEGIN{IGNORECASE=1} /<\/head>/{print inj} {print}' index.html > index.html.tmp
-            mv index.html.tmp index.html
-          fi
+          python - <<'PY'
+          import json
+          import os
+          import re
+          import sys
+
+          path = "index.html"
+          secrets = {
+              "POLLINATIONS_TOKEN": os.environ.get("POLLINATIONS_TOKEN", "").strip(),
+              "TWILIO_ACCOUNT_SID": os.environ.get("TWILIO_ACCOUNT_SID", "").strip(),
+              "TWILIO_AUTH_TOKEN": os.environ.get("TWILIO_AUTH_TOKEN", "").strip(),
+              "TWILIO_PHONE_NUMBER": os.environ.get("TWILIO_PHONE_NUMBER", "").strip(),
+          }
+
+          payload = {key: value for key, value in secrets.items() if value}
+          if not payload:
+              sys.exit(0)
+
+          script = "    <script id=\"deployment-secrets\">" + "".join(
+              f"window.{key}={json.dumps(value)};" for key, value in payload.items()
+          ) + "</script>"
+
+          with open(path, encoding="utf-8") as handle:
+              html = handle.read()
+
+          script_pattern = re.compile(r"<script id=\"deployment-secrets\">.*?</script>", re.IGNORECASE | re.DOTALL)
+          legacy_pattern = re.compile(r"<script>window\.POLLINATIONS_TOKEN.*?</script>", re.IGNORECASE | re.DOTALL)
+
+          if script_pattern.search(html):
+              html = script_pattern.sub(script, html)
+          elif legacy_pattern.search(html):
+              html = legacy_pattern.sub(script, html)
+          else:
+              html = re.sub(r"</head>", script + "\n  </head>", html, count=1, flags=re.IGNORECASE)
+
+          with open(path, "w", encoding="utf-8") as handle:
+              handle.write(html)
+          PY
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

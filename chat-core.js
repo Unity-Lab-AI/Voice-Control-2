@@ -3,9 +3,21 @@ async function pollinationsFetch(url, options = {}, { timeoutMs = 45000 } = {}) 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(new DOMException('timeout', 'AbortError')), timeoutMs);
     try {
+        const init = { ...options, signal: controller.signal, cache: 'no-store' };
+        const token = typeof window !== 'undefined' && typeof window.POLLINATIONS_TOKEN === 'string'
+            ? window.POLLINATIONS_TOKEN.trim()
+            : '';
+        if (token) {
+            const headers = new Headers(init.headers || {});
+            if (!headers.has('Authorization')) {
+                headers.set('Authorization', `Bearer ${token}`);
+            }
+            init.headers = headers;
+        }
+
         const res = await fetch(
             url,
-            { ...options, signal: controller.signal, cache: 'no-store' } // fixed: spread options
+            init
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res;

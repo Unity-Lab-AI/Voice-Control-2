@@ -36,6 +36,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const twilioVoiceSelect = document.getElementById("twilio-voice-select");
     const twilioCallBtn = document.getElementById("twilio-start-call-btn");
     const twilioStatusEl = document.getElementById("twilio-call-status");
+    const twilioSecretsContainer = document.getElementById("twilio-secret-credentials");
+    const twilioAccountSidDisplay = document.getElementById("twilio-account-sid-display");
+    const twilioAuthTokenDisplay = document.getElementById("twilio-auth-token-display");
+    const twilioPhoneDisplay = document.getElementById("twilio-phone-display");
 
     const twilioStorageKeys = {
         server: "unityTwilioServerUrl",
@@ -43,6 +47,40 @@ document.addEventListener("DOMContentLoaded", () => {
         prompt: "unityTwilioInitialPrompt",
         voice: "unityTwilioVoice"
     };
+
+    const deploymentSecrets = {
+        accountSid: typeof window.TWILIO_ACCOUNT_SID === "string" ? window.TWILIO_ACCOUNT_SID.trim() : "",
+        authToken: typeof window.TWILIO_AUTH_TOKEN === "string" ? window.TWILIO_AUTH_TOKEN.trim() : "",
+        phoneNumber: typeof window.TWILIO_PHONE_NUMBER === "string" ? window.TWILIO_PHONE_NUMBER.trim() : ""
+    };
+
+    function applySecretToField(field, value) {
+        if (!field) return false;
+        const normalized = typeof value === "string" ? value.trim() : "";
+        const wrapper = field.closest(".form-group") || field.parentElement;
+        if (normalized) {
+            field.value = normalized;
+            if (wrapper && wrapper.classList.contains("hidden")) {
+                wrapper.classList.remove("hidden");
+            }
+            return true;
+        }
+        field.value = "";
+        if (wrapper && !wrapper.classList.contains("hidden")) {
+            wrapper.classList.add("hidden");
+        }
+        return false;
+    }
+
+    if (twilioSecretsContainer) {
+        const hasSecrets = [
+            applySecretToField(twilioAccountSidDisplay, deploymentSecrets.accountSid),
+            applySecretToField(twilioAuthTokenDisplay, deploymentSecrets.authToken),
+            applySecretToField(twilioPhoneDisplay, deploymentSecrets.phoneNumber)
+        ].some(Boolean);
+
+        twilioSecretsContainer.classList.toggle("hidden", !hasSecrets);
+    }
 
     function sanitizeServerUrl(value) {
         if (!value) return "";
@@ -85,6 +123,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const storedPhone = localStorage.getItem(twilioStorageKeys.phone);
         if (storedPhone) {
             twilioPhoneInput.value = storedPhone;
+        }
+        if (!twilioPhoneInput.value && deploymentSecrets.phoneNumber) {
+            twilioPhoneInput.value = deploymentSecrets.phoneNumber;
+            persistValue(twilioStorageKeys.phone, deploymentSecrets.phoneNumber);
         }
         twilioPhoneInput.addEventListener("change", () => {
             persistValue(twilioStorageKeys.phone, twilioPhoneInput.value);
