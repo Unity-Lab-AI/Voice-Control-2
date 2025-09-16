@@ -1,0 +1,94 @@
+name: Pull Request Quality Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+      - '*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run-tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.run-tests.outputs.status }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Tests
+        id: run-tests
+        run: |
+          mkdir -p reports
+          set +e
+          npm run test:pollinations:pr > reports/pull-request-tests.log 2>&1
+          exit_code=$?
+          set -e
+          if [ "$exit_code" -ne 0 ]; then
+            status="failed"
+          else
+            status="passed"
+          fi
+          echo "$status" > reports/status.txt
+          echo "$exit_code" > reports/exit-code.txt
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pull-request-tests
+          path: reports
+          if-no-files-found: warn
+
+  report:
+    name: Report Tests Statuses
+    runs-on: ubuntu-latest
+    needs: run-tests
+    if: always()
+    steps:
+      - name: Download test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: pull-request-tests
+          path: reports
+        continue-on-error: true
+
+      - name: Summarize results
+        run: |
+          status="${{ needs.run-tests.outputs.status }}"
+          if [ -z "$status" ]; then
+            status="unknown"
+          fi
+
+          echo "### Pull Request Test Statuses" >> "$GITHUB_STEP_SUMMARY"
+          case "$status" in
+            passed)
+              echo "- ✅ Pollinations text generation test (PR)" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            failed)
+              echo "- ❌ Pollinations text generation test (PR)" >> "$GITHUB_STEP_SUMMARY"
+              if [ -f reports/pull-request-tests.log ]; then
+                echo '\n<details><summary>View log</summary>\n\n' >> "$GITHUB_STEP_SUMMARY"
+                tail -n 40 reports/pull-request-tests.log >> "$GITHUB_STEP_SUMMARY"
+                echo '\n</details>' >> "$GITHUB_STEP_SUMMARY"
+              fi
+              ;;
+            *)
+              echo "- ⚠️ Pollinations text generation test status: $status" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+          esac

@@ -16,6 +16,46 @@ const LOCAL_MODELS_PATH = 'data/models.json';
 const API_SEED_LENGTH = 8;
 let cryptoSeedWarningLogged = false;
 
+const FALLBACK_MODELS = [
+  {
+    id: 'openai',
+    label: 'OpenAI (GPT-4o mini)',
+    description: 'Pollinations gateway to GPT-4o mini for general creative work.',
+    tier: 'seed',
+    voices: ['alloy', 'nova', 'shimmer']
+  },
+  {
+    id: 'mistral',
+    label: 'Mistral',
+    description: 'Fast multilingual model tuned for product copy and ideation.',
+    tier: 'seed',
+    voices: ['alloy', 'fable']
+  },
+  {
+    id: 'llama',
+    label: 'LLaMA Fusion',
+    description: 'Community LLaMA fusion with extended context for research assistance.',
+    tier: 'community',
+    voices: ['echo', 'onyx']
+  },
+  {
+    id: 'deepseek',
+    label: 'DeepSeek',
+    description: 'Analytical reasoning model great for summarising and planning.',
+    tier: 'seed',
+    voices: ['echo', 'shimmer']
+  },
+  {
+    id: 'claude-hybridspace',
+    label: 'Claude HybridSpace',
+    description: 'Anthropic Claude via Pollinations for thoughtful long-form answers.',
+    tier: 'growth',
+    voices: ['nova', 'fable']
+  }
+];
+
+const FALLBACK_VOICES = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
+
 function sanitizeToken(value) {
   if (typeof value !== 'string') {
     return '';

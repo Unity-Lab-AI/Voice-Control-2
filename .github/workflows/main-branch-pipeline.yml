@@ -1,0 +1,176 @@
+name: Main Branch Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: main-branch-pipeline
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and Upload Artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build static files
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-dist
+          path: dist
+          if-no-files-found: error
+
+      - name: Prepare GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  report-build:
+    name: Report Build Status
+    runs-on: ubuntu-latest
+    needs: build
+    if: always()
+    steps:
+      - name: Summarize build outcome
+        run: |
+          result="${{ needs.build.result }}"
+          echo "### Main Branch Build Status" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$result" = "success" ]; then
+            echo "- ✅ Build and artifact upload completed successfully." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- ❌ Build or artifact upload failed. Inspect the build job logs." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ needs.build.result == 'success' }}
+    outputs:
+      status: ${{ steps.run-tests.outputs.status }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Pollinations tests
+        id: run-tests
+        run: |
+          mkdir -p reports
+          set +e
+          npm run test:pollinations > reports/main-tests.log 2>&1
+          exit_code=$?
+          set -e
+          if [ "$exit_code" -ne 0 ]; then
+            status="failed"
+          else
+            status="passed"
+          fi
+          echo "$status" > reports/status.txt
+          echo "$exit_code" > reports/exit-code.txt
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-tests
+          path: reports
+          if-no-files-found: warn
+
+  report-tests:
+    name: Report Tests Statuses
+    runs-on: ubuntu-latest
+    needs:
+      - tests
+      - build
+    if: always()
+    steps:
+      - name: Download test artifacts
+        if: ${{ needs.tests.result != 'skipped' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: main-tests
+          path: reports
+        continue-on-error: true
+
+      - name: Summarize test outcome
+        run: |
+          build_result="${{ needs.build.result }}"
+          test_result="${{ needs.tests.result }}"
+          status="${{ needs.tests.outputs.status }}"
+
+          echo "### Main Branch Test Statuses" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$build_result" != "success" ]; then
+            echo "- ⚠️ Tests were not run because the build job did not succeed." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          case "$test_result" in
+            success)
+              echo "- ✅ Pollinations text generation test" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            failure)
+              echo "- ❌ Pollinations text generation test" >> "$GITHUB_STEP_SUMMARY"
+              if [ -f reports/main-tests.log ]; then
+                echo '\n<details><summary>View log</summary>\n\n' >> "$GITHUB_STEP_SUMMARY"
+                tail -n 40 reports/main-tests.log >> "$GITHUB_STEP_SUMMARY"
+                echo '\n</details>' >> "$GITHUB_STEP_SUMMARY"
+              fi
+              ;;
+            skipped)
+              echo "- ⚠️ Pollinations text generation test was skipped." >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            *)
+              if [ -n "$status" ]; then
+                echo "- ⚠️ Pollinations text generation test status: $status" >> "$GITHUB_STEP_SUMMARY"
+              else
+                echo "- ⚠️ Pollinations text generation test status is unknown." >> "$GITHUB_STEP_SUMMARY"
+              fi
+              ;;
+          esac
+
+  deploy:
+    name: Deploy to Pages
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ needs.build.result == 'success' }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Deploy GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
