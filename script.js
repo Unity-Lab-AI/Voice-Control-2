@@ -22,7 +22,6 @@ const API_ENDPOINT = 'https://text.pollinations.ai/openai';
 const MODELS_ENDPOINT = 'https://text.pollinations.ai/models';
 const API_REFERRER = 'www.unityailab.com';
 const LOCAL_MODELS_PATH = 'data/models.json';
-const THEME_MANIFEST_PATH = 'themes/manifest.json';
 
 const API_SEED_LENGTH = 8;
 let cryptoSeedWarningLogged = false;
@@ -108,50 +107,57 @@ function generateSeed() {
 
 const API_TOKEN = resolvePollinationsToken();
 
-const LEGACY_THEME_MAP = {
-  'theme-light': 'daylight',
-  'theme-dark': 'aurora',
-  'theme-amoled': 'nightfall'
-};
-
-const DEFAULT_THEMES = [
-  {
-    id: 'daylight',
-    label: 'Daylight',
-    className: 'theme-daylight',
-    description: 'Airy daylight interface with luminous glass surfaces.'
-  },
-  {
-    id: 'aurora',
-    label: 'Aurora Dark',
-    className: 'theme-aurora',
-    description: 'Nocturnal gradient with neon aurora accents.'
-  },
-  {
-    id: 'nightfall',
-    label: 'Nightfall AMOLED',
-    className: 'theme-nightfall',
-    description: 'OLED-friendly midnight palette with vibrant highlights.'
-  },
-  {
-    id: 'ocean',
-    label: 'Ocean Breeze',
-    className: 'theme-ocean',
-    description: 'Atlantic teal workspace with crisp coastal glow.'
-  },
-  {
-    id: 'honeycomb',
-    label: 'Honeycomb Glow',
-    className: 'theme-honeycomb',
-    description: 'Warm amber glass and honeycomb lighting.'
-  },
-  {
-    id: 'serenity',
-    label: 'Serenity Bloom',
-    className: 'theme-serenity',
-    description: 'Lavender sunrise palette for calm focus.'
-  }
+const DEFAULT_THEME_ID = 'light';
+const THEME_FILES = [
+  'light',
+  'dark',
+  'oled',
+  'burple',
+  'cyberpunk',
+  'dracula',
+  'gruvbox_dark',
+  'gruvbox_light',
+  'hacker',
+  'honeycomb',
+  'material_dark',
+  'material_light',
+  'monokai',
+  'nord',
+  'ocean_breeze',
+  'pastel_dream',
+  'pretty_pink',
+  'rainbow_throwup',
+  'serenity',
+  'solarized_dark',
+  'solarized_light',
+  'subtle_light',
+  'vintage_paper'
 ];
+
+function formatThemeLabel(slug) {
+  return slug
+    .replace(/_/g, ' ')
+    .replace(/\b(\w)/g, (char) => char.toUpperCase())
+    .replace(/Oled/gi, 'OLED');
+}
+
+const THEME_CATALOG = THEME_FILES.map((slug) => ({
+  id: slug,
+  label: formatThemeLabel(slug),
+  description: ''
+}));
+
+const LEGACY_THEME_MAP = {
+  'theme-light': 'light',
+  'theme-dark': 'dark',
+  'theme-amoled': 'oled',
+  daylight: 'light',
+  aurora: 'dark',
+  nightfall: 'oled',
+  ocean: 'ocean_breeze',
+  honeycomb: 'honeycomb',
+  serenity: 'serenity'
+};
 
 const state = {
   aiInstruct: '',
@@ -159,12 +165,12 @@ const state = {
   memories: [],
   selectedModel: FALLBACK_MODELS[0].id,
   selectedVoice: FALLBACK_VOICES[0],
-  selectedTheme: DEFAULT_THEMES[0].id,
+  selectedTheme: DEFAULT_THEME_ID,
   memoryEnabled: true,
   isSending: false,
   availableModels: [],
   availableVoices: [],
-  availableThemes: DEFAULT_THEMES.map((theme) => ({ ...theme }))
+  availableThemes: THEME_CATALOG.map((theme) => ({ ...theme }))
 };
 
 const elements = {};
@@ -239,82 +245,21 @@ function resolveThemeId(value) {
   if (!normalized) {
     return '';
   }
-  return LEGACY_THEME_MAP[normalized] || normalized;
+  const lower = normalized.toLowerCase();
+  return LEGACY_THEME_MAP[lower] || normalized;
 }
 
 function findThemeById(id, collection = state.availableThemes) {
   if (!id) return null;
-  return collection.find((theme) => theme.id === id) || null;
-}
-
-function createThemeEntry(input) {
-  if (!input) return null;
-
-  if (typeof input === 'string') {
-    const id = resolveThemeId(input);
-    if (!id) return null;
-    const fallback = findThemeById(id, DEFAULT_THEMES);
-    return fallback ? { ...fallback } : { id, label: id, className: `theme-${id}` };
+  const fromCollection = collection.find((theme) => theme.id === id);
+  if (fromCollection) {
+    return fromCollection;
   }
-
-  if (typeof input !== 'object') return null;
-
-  const id = resolveThemeId(input.id || input.slug || input.value || input.className);
-  if (!id) return null;
-
-  const labelSource = input.label || input.name || input.title || id;
-  const label = String(labelSource).trim() || id;
-  const className = String(input.className || `theme-${id}`).trim();
-  const description = String(input.description || input.summary || '').trim();
-
-  return {
-    id,
-    label,
-    className,
-    description
-  };
+  return THEME_CATALOG.find((theme) => theme.id === id) || null;
 }
 
-function normalizeThemePayload(payload) {
-  const seen = new Set();
-  const themes = [];
-
-  const addTheme = (entry) => {
-    if (!entry || !entry.id || seen.has(entry.id)) return;
-    seen.add(entry.id);
-    const fallback = findThemeById(entry.id, DEFAULT_THEMES);
-    themes.push({ ...fallback, ...entry });
-  };
-
-  const processValue = (value) => {
-    if (!value) return;
-    if (Array.isArray(value)) {
-      value.forEach(processValue);
-    } else if (typeof value === 'object' && Array.isArray(value.themes)) {
-      processValue(value.themes);
-    } else {
-      addTheme(createThemeEntry(value));
-    }
-  };
-
-  processValue(payload);
-  DEFAULT_THEMES.forEach(addTheme);
-
-  return themes;
-}
-
-async function fetchThemes() {
-  try {
-    const response = await fetch(THEME_MANIFEST_PATH, { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error(`Status ${response.status}`);
-    }
-    const data = await response.json();
-    return normalizeThemePayload(data);
-  } catch (error) {
-    console.warn('Falling back to bundled themes', error.message || error);
-    return DEFAULT_THEMES.map((theme) => ({ ...theme }));
-  }
+function getThemeList() {
+  return THEME_CATALOG.map((theme) => ({ ...theme }));
 }
 
 function bindElements() {
@@ -424,32 +369,45 @@ function persistState() {
 }
 
 function applyTheme(themeId) {
-  const availableThemes = state.availableThemes.length ? state.availableThemes : DEFAULT_THEMES;
-  const targetTheme = findThemeById(themeId, availableThemes) || availableThemes[0] || DEFAULT_THEMES[0];
+  const themes = state.availableThemes.length ? state.availableThemes : getThemeList();
+  const fallbackTheme = findThemeById(DEFAULT_THEME_ID, themes) || themes[0] || THEME_CATALOG[0];
+  const targetTheme = findThemeById(themeId, themes) || fallbackTheme;
 
-  const classes = new Set([
-    ...availableThemes.map((theme) => theme.className),
-    ...DEFAULT_THEMES.map((theme) => theme.className)
-  ]);
+  const resolvedId = targetTheme?.id || DEFAULT_THEME_ID;
+  state.selectedTheme = resolvedId;
 
-  classes.forEach((cls) => {
-    if (cls) {
-      document.body.classList.remove(cls);
-    }
-  });
-
-  if (targetTheme?.className) {
-    document.body.classList.add(targetTheme.className);
+  if (typeof document !== 'undefined') {
+    document.documentElement.setAttribute('data-theme', resolvedId);
   }
 
-  state.selectedTheme = targetTheme.id;
-
   if (elements.themeSelect && elements.themeSelect.options.length) {
-    elements.themeSelect.value = targetTheme.id;
+    elements.themeSelect.value = resolvedId;
   }
 
   persistState();
   updateSessionSnapshot();
+}
+
+let themeStylesLoaded = false;
+
+function ensureThemeStylesLoaded() {
+  if (themeStylesLoaded || typeof document === 'undefined') {
+    return;
+  }
+  const head = document.head || document.getElementsByTagName('head')[0];
+  if (!head) return;
+
+  THEME_CATALOG.forEach((theme) => {
+    if (!document.querySelector(`link[data-theme-source="${theme.id}"]`)) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = `themes/${theme.id}.css`;
+      link.dataset.themeSource = theme.id;
+      head.appendChild(link);
+    }
+  });
+
+  themeStylesLoaded = true;
 }
 
 function setSelectPlaceholder(select, text) {
@@ -634,7 +592,7 @@ function updateSessionSnapshot() {
     elements.voiceBadge.title = state.selectedVoice;
   }
   if (elements.themeBadge) {
-    const theme = findThemeById(state.selectedTheme) || findThemeById(state.selectedTheme, DEFAULT_THEMES);
+    const theme = findThemeById(state.selectedTheme);
     const themeLabel = theme?.label || state.selectedTheme;
     elements.themeBadge.textContent = themeLabel;
     elements.themeBadge.title = theme?.description || themeLabel;
@@ -842,7 +800,7 @@ function handleThemeChange(event) {
   const themeId = event.target.value;
   if (!themeId) return;
   applyTheme(themeId);
-  const theme = findThemeById(themeId) || findThemeById(themeId, DEFAULT_THEMES);
+  const theme = findThemeById(themeId);
   if (theme) {
     showToast(`Theme set to ${theme.label}.`, 'info', 2200);
   }
@@ -881,7 +839,7 @@ function resetChat() {
 }
 
 function buildSystemPrompt() {
-  const theme = findThemeById(state.selectedTheme) || findThemeById(state.selectedTheme, DEFAULT_THEMES);
+  const theme = findThemeById(state.selectedTheme);
   const themeLabel = theme?.label || 'Daylight';
   const memoryBlock = state.memories.slice(-10).map((memory) => `[memory]${memory}[/memory]`).join('\n');
   const memoryCopy = state.memories.slice(-10).map((memory, index) => `${index + 1}. ${memory}`).join('\n');
@@ -1017,6 +975,7 @@ async function initialize() {
   configureLibraries();
   initClock();
   loadStoredState();
+  ensureThemeStylesLoaded();
 
   setSelectPlaceholder(elements.modelSelect, 'Loading models…');
   setSelectPlaceholder(elements.voiceSelect, 'Loading voices…');
@@ -1040,10 +999,12 @@ async function initialize() {
     showToast('Could not load ai-instruct.txt, using a fallback prompt.', 'error');
   }
 
-  const themes = await fetchThemes();
-  state.availableThemes = themes.length ? themes : DEFAULT_THEMES.map((theme) => ({ ...theme }));
+  const themes = getThemeList();
+  state.availableThemes = themes;
   if (!findThemeById(state.selectedTheme, state.availableThemes)) {
-    state.selectedTheme = state.availableThemes[0]?.id || DEFAULT_THEMES[0].id;
+    state.selectedTheme = findThemeById(DEFAULT_THEME_ID, state.availableThemes)?.id
+      || state.availableThemes[0]?.id
+      || DEFAULT_THEME_ID;
   }
   populateSelect(elements.themeSelect, state.availableThemes, state.selectedTheme);
   applyTheme(state.selectedTheme);
