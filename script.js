@@ -30,8 +30,8 @@ const state = {
   selectedTheme: 'theme-light',
   memoryEnabled: true,
   isSending: false,
-  availableModels: FALLBACK_MODELS,
-  availableVoices: [...FALLBACK_VOICES]
+  availableModels: [],
+  availableVoices: []
 };
 
 const elements = {};
@@ -162,83 +162,158 @@ function applyTheme(themeClass) {
   persistState();
 }
 
-function populateSelect(select, options, selectedValue) {
+function setSelectPlaceholder(select, text) {
   if (!select) return;
   select.innerHTML = '';
+  const option = document.createElement('option');
+  option.value = '';
+  option.textContent = text;
+  option.disabled = true;
+  option.selected = true;
+  select.appendChild(option);
+  select.disabled = true;
+}
+
+function populateSelect(select, options, selectedValue, { includeMeta = false } = {}) {
+  if (!select) return;
+  select.innerHTML = '';
+
+  if (!Array.isArray(options) || !options.length) {
+    setSelectPlaceholder(select, 'No options available');
+    return;
+  }
+
+  select.disabled = false;
+
   options.forEach((opt) => {
     const option = document.createElement('option');
     if (typeof opt === 'string') {
       option.value = opt;
       option.textContent = opt;
-    } else {
+    } else if (opt && typeof opt === 'object') {
       option.value = opt.id;
       option.textContent = opt.label || opt.id;
+
+      if (includeMeta) {
+        const tierSuffix = opt.tier ? ` • Tier: ${opt.tier}` : '';
+        if (opt.description) {
+          option.title = `${opt.description}${tierSuffix}`.trim();
+        } else if (opt.tier) {
+          option.title = `Tier: ${opt.tier}`;
+        }
+        if (opt.tier) {
+          option.dataset.tier = opt.tier;
+        }
+      }
     }
+
     if (option.value === selectedValue) {
       option.selected = true;
     }
+
     select.appendChild(option);
   });
 }
 
-async function fetchModels() {
-  let data;
-  try {
-    const response = await fetch(MODELS_ENDPOINT, { cache: 'no-store' });
-    if (response.ok) {
-      data = await response.json();
-    } else {
-      throw new Error(`Status ${response.status}`);
-    }
-  } catch (error) {
-    console.warn('Falling back to predefined models', error);
-    return {
-      models: FALLBACK_MODELS,
-      voices: FALLBACK_VOICES
-    };
-  }
+function createModelEntry(id, details = {}) {
+  if (!id) return null;
 
-  const models = [];
+  const friendlyName = (details.description || details.title || details.label || details.name || '').trim();
+  const includesId = friendlyName && friendlyName.toLowerCase().includes(String(id).toLowerCase());
+  const label = friendlyName ? (includesId ? friendlyName : `${friendlyName} (${id})`) : id;
+  const tier = details.tier || (details.community ? 'community' : '');
+  const voices = Array.isArray(details.voices)
+    ? details.voices
+        .map((voice) => (typeof voice === 'string' ? voice.trim() : voice?.id?.trim?.()))
+        .filter((voice) => Boolean(voice))
+    : [];
+  const outputModalities = Array.isArray(details.output_modalities)
+    ? details.output_modalities
+        .map((modality) => (typeof modality === 'string' ? modality.toLowerCase() : ''))
+        .filter(Boolean)
+    : [];
+  const supportsText = !outputModalities.length || outputModalities.includes('text');
+
+  return {
+    id,
+    label,
+    description: friendlyName,
+    tier,
+    voices,
+    supportsText
+  };
+}
+
+function normalizeModelPayload(payload) {
+  const modelMap = new Map();
   const voices = new Set(FALLBACK_VOICES);
 
-  const processModel = (id, details) => {
-    if (!id) return;
-    const label = details?.title || details?.name || details?.label || id;
-    models.push({ id, label });
-    if (details?.voices && Array.isArray(details.voices)) {
-      details.voices.forEach((voice) => {
-        if (voice && typeof voice === 'string') {
-          voices.add(voice);
-        } else if (voice?.id) {
-          voices.add(voice.id);
-        }
-      });
-    }
+  const appendModel = (entry) => {
+    if (!entry || modelMap.has(entry.id)) return;
+    modelMap.set(entry.id, entry);
+    entry.voices.forEach((voice) => voices.add(voice));
   };
 
-  if (Array.isArray(data)) {
-    data.forEach((item) => {
+  if (Array.isArray(payload)) {
+    payload.forEach((item) => {
       if (typeof item === 'string') {
-        models.push({ id: item, label: item });
+        appendModel(createModelEntry(item));
       } else if (item && typeof item === 'object') {
-        processModel(item.id || item.name, item);
+        const id = item.id || item.name || item.model;
+        appendModel(createModelEntry(id, item));
       }
     });
-  } else if (data && typeof data === 'object') {
-    Object.entries(data).forEach(([id, details]) => processModel(id, details));
+  } else if (payload && typeof payload === 'object') {
+    Object.entries(payload).forEach(([id, details]) => {
+      if (typeof details === 'string') {
+        appendModel(createModelEntry(id, { description: details }));
+      } else {
+        appendModel(createModelEntry(id, details || {}));
+      }
+    });
   }
 
-  const uniqueModels = models.length ? models : FALLBACK_MODELS;
-  return {
-    models: uniqueModels,
-    voices: Array.from(voices)
-  };
+  if (!modelMap.size) {
+    FALLBACK_MODELS.forEach((fallback) => {
+      appendModel(createModelEntry(fallback.id, fallback));
+    });
+  }
+
+  const models = Array.from(modelMap.values()).sort((a, b) =>
+    a.label.localeCompare(b.label, undefined, { sensitivity: 'base' })
+  );
+  const voiceList = Array.from(voices).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+  return { models, voices: voiceList };
+}
+
+async function fetchModels() {
+  try {
+    const response = await fetch(MODELS_ENDPOINT, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Status ${response.status}`);
+    }
+    const data = await response.json();
+    return normalizeModelPayload(data);
+  } catch (error) {
+    console.warn('Falling back to predefined models', error);
+    return normalizeModelPayload(
+      FALLBACK_MODELS.map((model) => ({ id: model.id, label: model.label }))
+    );
+  }
 }
 
 function updateSessionSnapshot() {
   const selectedModelOption = state.availableModels.find((m) => m.id === state.selectedModel);
-  elements.modelBadge.textContent = selectedModelOption ? selectedModelOption.label : state.selectedModel;
-  elements.voiceBadge.textContent = state.selectedVoice;
+  if (elements.modelBadge) {
+    const modelLabel = selectedModelOption?.label || state.selectedModel;
+    elements.modelBadge.textContent = modelLabel;
+    elements.modelBadge.title = selectedModelOption?.description || modelLabel;
+  }
+  if (elements.voiceBadge) {
+    elements.voiceBadge.textContent = state.selectedVoice;
+    elements.voiceBadge.title = state.selectedVoice;
+  }
 }
 
 function renderMemories() {
@@ -613,6 +688,9 @@ async function initialize() {
   loadStoredState();
   applyTheme(state.selectedTheme);
 
+  setSelectPlaceholder(elements.modelSelect, 'Loading models…');
+  setSelectPlaceholder(elements.voiceSelect, 'Loading voices…');
+
   const preferencesLoaded = state.memoryEnabled;
   elements.memoryToggle.checked = preferencesLoaded;
 
@@ -630,8 +708,9 @@ async function initialize() {
   }
 
   const { models, voices } = await fetchModels();
-  state.availableModels = models;
-  state.availableVoices = voices;
+  const textModels = models.filter((model) => model.supportsText !== false);
+  state.availableModels = textModels.length ? textModels : models;
+  state.availableVoices = voices.length ? voices : [...FALLBACK_VOICES];
 
   if (!state.availableModels.find((model) => model.id === state.selectedModel)) {
     state.selectedModel = state.availableModels[0]?.id || state.selectedModel;
@@ -641,8 +720,8 @@ async function initialize() {
     state.selectedVoice = state.availableVoices[0] || state.selectedVoice;
   }
 
-  populateSelect(elements.modelSelect, models, state.selectedModel);
-  populateSelect(elements.voiceSelect, voices, state.selectedVoice);
+  populateSelect(elements.modelSelect, state.availableModels, state.selectedModel, { includeMeta: true });
+  populateSelect(elements.voiceSelect, state.availableVoices, state.selectedVoice);
   elements.themeSelect.value = state.selectedTheme;
 
   elements.memoryToggle.checked = state.memoryEnabled;
