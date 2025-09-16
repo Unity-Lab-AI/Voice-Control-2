@@ -8,16 +8,6 @@ const STORAGE_KEYS = {
   preferences: 'unity-preferences'
 };
 
-const FALLBACK_MODELS = [
-  { id: 'openai', label: 'OpenAI (GPT-4o mini)' },
-  { id: 'mistral', label: 'Mistral' },
-  { id: 'llama', label: 'LLaMA Fusion' },
-  { id: 'deepseek', label: 'DeepSeek' },
-  { id: 'claude-hybridspace', label: 'Claude HybridSpace' }
-];
-
-const FALLBACK_VOICES = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
-
 const API_ENDPOINT = 'https://text.pollinations.ai/openai';
 const MODELS_ENDPOINT = 'https://text.pollinations.ai/models';
 const API_REFERRER = 'www.unityailab.com';
@@ -53,7 +43,6 @@ function resolvePollinationsToken() {
   const directCandidates = [
     window.POLLINATIONS_TOKEN,
     window.__POLLINATIONS_TOKEN__,
-    window.__UNITY_CONFIG__?.pollinationsToken,
     window.__ENV__?.POLLINATIONS_TOKEN
   ];
 
