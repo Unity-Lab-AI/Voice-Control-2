@@ -8,6 +8,8 @@
     "build": "node scripts/build.js",
     "test:models": "node scripts/test-models.js",
     "test:artifact": "node scripts/verify-dist.js",
+    "test:pollinations": "node --test tests",
+    "test:pollinations:pr": "node --test test",
     "report:generate": "node scripts/generate-report.js"
   },
   "engines": {
