@@ -5,6 +5,7 @@ const path = require('path');
 const API_ROOT = 'https://text.pollinations.ai';
 const MODELS_ENDPOINT = `${API_ROOT}/models`;
 const OPENAI_ENDPOINT = `${API_ROOT}/openai`;
+const WORKSPACE_REFERRER = 'unity-chat.ci';
 const REPORT_DIR = path.resolve(__dirname, '..', 'reports');
 const REPORT_PATH = path.join(REPORT_DIR, 'model-responses.json');
 const STEP_SUMMARY_TITLE = 'Model response verification';
@@ -78,7 +79,7 @@ function normalizeModelPayload(payload) {
 function resolveHeaders() {
   const headers = {
     'Content-Type': 'application/json',
-    'User-Agent': 'UnityCopilotStudio-ModelTest/1.0'
+    'User-Agent': 'UnityChat-ModelTest/1.0'
   };
 
   const token = process.env.POLLINATIONS_TOKEN?.trim();
@@ -137,7 +138,11 @@ async function testModel(model, headers) {
   };
 
   try {
-    const response = await fetch(OPENAI_ENDPOINT, {
+    const requestUrl = new URL(OPENAI_ENDPOINT);
+    requestUrl.searchParams.set('model', model.id);
+    requestUrl.searchParams.set('referrer', WORKSPACE_REFERRER);
+
+    const response = await fetch(requestUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify(payload)
@@ -218,7 +223,9 @@ async function main() {
   ensureDir(REPORT_DIR);
 
   const headers = resolveHeaders();
-  const modelsPayload = await fetchJson(MODELS_ENDPOINT, { headers });
+  const modelsUrl = new URL(MODELS_ENDPOINT);
+  modelsUrl.searchParams.set('referrer', WORKSPACE_REFERRER);
+  const modelsPayload = await fetchJson(modelsUrl, { headers });
   const models = normalizeModelPayload(modelsPayload)
     .filter((model) => model?.id)
     .filter((model) => model.supportsText !== false);

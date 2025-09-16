@@ -30,7 +30,10 @@ function main() {
   ['modelSelect', 'voiceSelect', 'themeSelect', 'chatLog', 'composer', 'memoryList'].forEach((id) => {
     assert(html.includes(`id="${id}"`), `Expected element with id="${id}" in index.html`);
   });
-  assert(html.includes('Windows 11 2025 experience'), 'index.html should describe the Windows 11 2025 style experience.');
+  assert(
+    html.includes('Pollinations conversations in a focused creative workspace'),
+    'index.html should describe the Unity Chat workspace experience.'
+  );
 
   const js = readText(path.join(ROOT, 'script.js'));
   ['API_ENDPOINT', 'buildSystemPrompt', 'parseStructuredContent', 'fetchModels'].forEach((token) => {

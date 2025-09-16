@@ -102,7 +102,7 @@ function main() {
   const artifactReport = safeReadJson(ARTIFACT_REPORT_PATH);
 
   const sections = [
-    '# Unity Copilot Studio pipeline summary',
+    '# Unity Chat pipeline summary',
     '',
     ...renderModelSection(modelReport),
     '',
