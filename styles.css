@@ -2,134 +2,38 @@
   color-scheme: light;
   --font-sans: "Inter", "Segoe UI", sans-serif;
   --font-display: "Space Grotesk", "Segoe UI", sans-serif;
-  --surface-glass: rgba(255, 255, 255, 0.65);
-  --surface-panel: rgba(255, 255, 255, 0.55);
-  --surface-panel-strong: rgba(255, 255, 255, 0.75);
-  --surface-chat-user: linear-gradient(135deg, rgba(116, 153, 255, 0.85), rgba(75, 115, 255, 0.85));
-  --surface-chat-assistant: rgba(255, 255, 255, 0.8);
-  --stroke: rgba(255, 255, 255, 0.35);
-  --text-strong: #11131f;
-  --text-muted: rgba(17, 19, 31, 0.65);
-  --text-inverse: #ffffff;
-  --accent: #5274ff;
-  --accent-soft: rgba(82, 116, 255, 0.2);
-  --shadow-soft: 0 20px 60px rgba(50, 60, 90, 0.25);
-  --radius-large: 28px;
-  --radius-medium: 18px;
-  --radius-small: 12px;
-  --blur-heavy: blur(36px);
-  --blur-medium: blur(18px);
-  --workspace-background: radial-gradient(circle at 20% 20%, rgba(164, 205, 255, 0.5), transparent 60%),
-    radial-gradient(circle at 80% 0%, rgba(255, 155, 222, 0.4), transparent 55%),
-    radial-gradient(circle at 50% 80%, rgba(126, 169, 255, 0.45), transparent 65%), #e6ecff;
-  --wallpaper-background: radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.35), transparent 60%),
-    radial-gradient(circle at 75% 10%, rgba(82, 116, 255, 0.25), transparent 55%),
-    radial-gradient(circle at 85% 85%, rgba(255, 135, 221, 0.25), transparent 60%);
-}
-
-body.theme-aurora {
-  color-scheme: dark;
-  --surface-glass: rgba(32, 36, 62, 0.72);
-  --surface-panel: rgba(30, 34, 58, 0.78);
-  --surface-panel-strong: rgba(42, 46, 76, 0.85);
-  --surface-chat-assistant: rgba(38, 43, 71, 0.82);
-  --surface-chat-user: linear-gradient(135deg, rgba(169, 112, 255, 0.85), rgba(95, 178, 255, 0.9));
-  --stroke: rgba(102, 112, 169, 0.35);
-  --text-strong: #f3f5ff;
-  --text-muted: rgba(224, 229, 255, 0.6);
-  --accent: #8ea6ff;
-  --accent-soft: rgba(142, 166, 255, 0.25);
-  --shadow-soft: 0 30px 70px rgba(8, 12, 34, 0.55);
-  --workspace-background: radial-gradient(circle at 10% 15%, rgba(85, 125, 255, 0.16), transparent 55%),
-    radial-gradient(circle at 70% -10%, rgba(186, 101, 255, 0.22), transparent 60%),
-    radial-gradient(circle at 50% 85%, rgba(54, 217, 255, 0.12), transparent 70%), #0f1426;
-  --wallpaper-background: radial-gradient(circle at 18% 12%, rgba(132, 169, 255, 0.22), transparent 58%),
-    radial-gradient(circle at 80% 0%, rgba(192, 125, 255, 0.2), transparent 55%),
-    radial-gradient(circle at 85% 88%, rgba(68, 226, 255, 0.18), transparent 65%);
-}
-
-body.theme-nightfall {
-  color-scheme: dark;
-  --surface-glass: rgba(8, 10, 18, 0.78);
-  --surface-panel: rgba(12, 14, 24, 0.92);
-  --surface-panel-strong: rgba(18, 22, 32, 0.95);
-  --surface-chat-assistant: rgba(22, 26, 40, 0.92);
-  --surface-chat-user: linear-gradient(135deg, rgba(255, 106, 189, 0.8), rgba(126, 172, 255, 0.9));
-  --stroke: rgba(80, 96, 180, 0.28);
-  --text-strong: #f8fbff;
-  --text-muted: rgba(248, 251, 255, 0.56);
-  --accent: #9ab6ff;
-  --accent-soft: rgba(154, 182, 255, 0.22);
-  --shadow-soft: 0 24px 84px rgba(0, 0, 0, 0.65);
-  --workspace-background: radial-gradient(circle at 12% 20%, rgba(255, 133, 237, 0.16), transparent 58%),
-    radial-gradient(circle at 85% -10%, rgba(108, 165, 255, 0.22), transparent 65%),
-    radial-gradient(circle at 52% 90%, rgba(82, 255, 227, 0.12), transparent 70%), #05060a;
-  --wallpaper-background: radial-gradient(circle at 20% 15%, rgba(255, 120, 210, 0.18), transparent 60%),
-    radial-gradient(circle at 82% 0%, rgba(104, 165, 255, 0.18), transparent 58%),
-    radial-gradient(circle at 88% 88%, rgba(82, 255, 227, 0.18), transparent 70%);
-}
-
-body.theme-ocean {
-  color-scheme: light;
-  --surface-glass: rgba(224, 244, 255, 0.75);
-  --surface-panel: rgba(210, 235, 250, 0.72);
-  --surface-panel-strong: rgba(220, 245, 255, 0.86);
-  --surface-chat-assistant: rgba(235, 248, 255, 0.86);
-  --surface-chat-user: linear-gradient(135deg, rgba(0, 182, 242, 0.85), rgba(0, 136, 231, 0.8));
-  --stroke: rgba(40, 145, 200, 0.28);
-  --text-strong: #062335;
-  --text-muted: rgba(6, 35, 53, 0.68);
-  --accent: #1896d3;
-  --accent-soft: rgba(24, 150, 211, 0.25);
-  --shadow-soft: 0 22px 64px rgba(22, 96, 140, 0.25);
-  --workspace-background: radial-gradient(circle at 12% 18%, rgba(134, 206, 255, 0.35), transparent 62%),
-    radial-gradient(circle at 86% 6%, rgba(0, 192, 255, 0.3), transparent 58%),
-    radial-gradient(circle at 48% 88%, rgba(133, 255, 224, 0.22), transparent 68%), #dff5ff;
-  --wallpaper-background: radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.42), transparent 60%),
-    radial-gradient(circle at 78% 4%, rgba(0, 160, 227, 0.22), transparent 55%),
-    radial-gradient(circle at 85% 92%, rgba(115, 226, 238, 0.28), transparent 70%);
-}
-
-body.theme-honeycomb {
-  color-scheme: light;
-  --surface-glass: rgba(255, 244, 217, 0.78);
-  --surface-panel: rgba(255, 235, 194, 0.8);
-  --surface-panel-strong: rgba(255, 240, 210, 0.88);
-  --surface-chat-assistant: rgba(255, 247, 227, 0.88);
-  --surface-chat-user: linear-gradient(135deg, rgba(255, 196, 94, 0.9), rgba(255, 167, 63, 0.85));
-  --stroke: rgba(255, 183, 66, 0.32);
-  --text-strong: #3f2400;
-  --text-muted: rgba(63, 36, 0, 0.68);
-  --accent: #ff9b21;
-  --accent-soft: rgba(255, 155, 33, 0.22);
-  --shadow-soft: 0 24px 62px rgba(158, 96, 18, 0.28);
-  --workspace-background: radial-gradient(circle at 16% 18%, rgba(255, 214, 138, 0.38), transparent 62%),
-    radial-gradient(circle at 84% 0%, rgba(255, 181, 94, 0.3), transparent 58%),
-    radial-gradient(circle at 50% 88%, rgba(255, 227, 167, 0.25), transparent 70%), #fff4d9;
-  --wallpaper-background: radial-gradient(circle at 24% 14%, rgba(255, 255, 255, 0.42), transparent 60%),
-    radial-gradient(circle at 78% 4%, rgba(255, 187, 102, 0.28), transparent 55%),
-    radial-gradient(circle at 88% 92%, rgba(255, 220, 164, 0.32), transparent 68%);
-}
-
-body.theme-serenity {
-  color-scheme: light;
-  --surface-glass: rgba(238, 232, 255, 0.72);
-  --surface-panel: rgba(230, 220, 255, 0.78);
-  --surface-panel-strong: rgba(242, 236, 255, 0.86);
-  --surface-chat-assistant: rgba(249, 244, 255, 0.88);
-  --surface-chat-user: linear-gradient(135deg, rgba(186, 158, 255, 0.85), rgba(122, 193, 255, 0.82));
-  --stroke: rgba(158, 140, 255, 0.28);
-  --text-strong: #241544;
-  --text-muted: rgba(36, 21, 68, 0.64);
-  --accent: #8a78ff;
-  --accent-soft: rgba(138, 120, 255, 0.24);
-  --shadow-soft: 0 24px 68px rgba(63, 54, 126, 0.28);
-  --workspace-background: radial-gradient(circle at 18% 16%, rgba(198, 177, 255, 0.34), transparent 62%),
-    radial-gradient(circle at 84% -6%, rgba(142, 194, 255, 0.32), transparent 58%),
-    radial-gradient(circle at 52% 90%, rgba(214, 182, 255, 0.22), transparent 70%), #f2edff;
-  --wallpaper-background: radial-gradient(circle at 22% 12%, rgba(255, 255, 255, 0.45), transparent 60%),
-    radial-gradient(circle at 80% 0%, rgba(180, 158, 255, 0.26), transparent 58%),
-    radial-gradient(circle at 90% 90%, rgba(170, 215, 255, 0.28), transparent 70%);
+  --radius-large: 24px;
+  --radius-medium: 16px;
+  --radius-small: 10px;
+  --blur-heavy: blur(32px);
+  --blur-medium: blur(16px);
+  --theme-background: #f0f4ff;
+  --theme-wallpaper: #f0f4ff;
+  --theme-window: rgba(255, 255, 255, 0.9);
+  --theme-panel: rgba(255, 255, 255, 0.85);
+  --theme-panel-alt: rgba(255, 255, 255, 0.95);
+  --theme-border: rgba(15, 23, 42, 0.15);
+  --theme-border-strong: rgba(15, 23, 42, 0.25);
+  --theme-text-primary: #0f172a;
+  --theme-text-secondary: rgba(15, 23, 42, 0.65);
+  --theme-text-inverse: #ffffff;
+  --theme-accent: #3f6df4;
+  --theme-accent-text: #ffffff;
+  --theme-accent-hover: #335ad3;
+  --theme-accent-disabled: rgba(63, 109, 244, 0.4);
+  --theme-accent-soft: rgba(63, 109, 244, 0.18);
+  --theme-chat-user-bg: rgba(63, 109, 244, 0.85);
+  --theme-chat-user-text: #ffffff;
+  --theme-chat-assistant-bg: rgba(255, 255, 255, 0.92);
+  --theme-chat-assistant-text: #0f172a;
+  --theme-composer-bg: rgba(255, 255, 255, 0.85);
+  --theme-input-bg: rgba(255, 255, 255, 0.95);
+  --theme-input-border: rgba(15, 23, 42, 0.2);
+  --theme-input-text: #0f172a;
+  --theme-ghost-bg: transparent;
+  --theme-ghost-text: #0f172a;
+  --theme-ghost-hover: rgba(63, 109, 244, 0.1);
+  --theme-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
 }
 
 * {
@@ -140,8 +44,8 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--font-sans);
-  color: var(--text-strong);
-  background: var(--workspace-background);
+  color: var(--theme-text-primary);
+  background: var(--theme-background);
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -149,7 +53,7 @@ body {
 .wallpaper {
   position: fixed;
   inset: 0;
-  background: var(--wallpaper-background);
+  background: var(--theme-wallpaper);
   filter: var(--blur-medium);
   z-index: 0;
   pointer-events: none;
@@ -171,10 +75,10 @@ body {
   padding: 12px 20px;
   margin-bottom: 24px;
   border-radius: var(--radius-large);
-  background: var(--surface-glass);
-  border: 1px solid var(--stroke);
+  background: var(--theme-window);
+  border: 1px solid var(--theme-border);
   backdrop-filter: var(--blur-heavy);
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--theme-shadow);
 }
 
 .taskbar-left {
@@ -192,8 +96,8 @@ body {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--theme-accent-soft);
+  color: var(--theme-accent);
 }
 
 .taskbar-right {
@@ -201,7 +105,7 @@ body {
   align-items: center;
   gap: 12px;
   font-size: 0.95rem;
-  color: var(--text-muted);
+  color: var(--theme-text-secondary);
 }
 
 .taskbar-indicator[data-status='busy'] {
@@ -213,7 +117,7 @@ body {
 }
 
 .taskbar-indicator[data-status='idle'] {
-  color: var(--text-muted);
+  color: var(--theme-text-secondary);
 }
 
 .taskbar-clock {
@@ -225,10 +129,10 @@ body {
   display: flex;
   flex-direction: column;
   border-radius: var(--radius-large);
-  background: var(--surface-glass);
-  border: 1px solid var(--stroke);
+  background: var(--theme-window);
+  border: 1px solid var(--theme-border);
   backdrop-filter: var(--blur-heavy);
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--theme-shadow);
   overflow: hidden;
   min-height: 0;
 }
@@ -238,7 +142,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 24px clamp(24px, 5vw, 48px) 18px;
-  border-bottom: 1px solid var(--stroke);
+  border-bottom: 1px solid var(--theme-border);
 }
 
 .window-title {
@@ -255,7 +159,7 @@ body {
 
 .window-title p {
   margin: 4px 0 0;
-  color: var(--text-muted);
+  color: var(--theme-text-secondary);
   font-size: 0.95rem;
 }
 
@@ -265,10 +169,10 @@ body {
   border-radius: 16px;
   display: grid;
   place-items: center;
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--theme-accent-soft);
+  color: var(--theme-accent);
   font-size: 1.4rem;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
 }
 
 .window-controls {
@@ -281,13 +185,13 @@ body {
   height: 14px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 1px 4px rgba(20, 24, 40, 0.2);
+  background: var(--theme-panel-alt);
+  box-shadow: none;
   cursor: pointer;
 }
 
 .window-button.close {
-  background: rgba(255, 113, 113, 0.85);
+  background: var(--theme-accent);
 }
 
 .window-body {
@@ -309,11 +213,11 @@ body {
 }
 
 .panel {
-  background: var(--surface-panel);
+  background: var(--theme-panel);
   border-radius: var(--radius-medium);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid var(--theme-border);
   padding: 20px 22px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 14px 34px rgba(35, 42, 78, 0.12);
+  box-shadow: var(--theme-shadow);
   backdrop-filter: var(--blur-medium);
 }
 
@@ -333,7 +237,7 @@ body {
 
 .input-group span,
 .input-group label {
-  color: var(--text-muted);
+  color: var(--theme-text-secondary);
   font-weight: 500;
 }
 
@@ -347,19 +251,13 @@ button {
 .input-group select {
   appearance: none;
   border-radius: var(--radius-small);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--theme-input-border);
+  background: var(--theme-input-bg);
   padding: 10px 14px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  color: var(--text-strong);
+  box-shadow: none;
+  color: var(--theme-input-text);
 }
 
-body.theme-aurora .input-group select,
-body.theme-nightfall .input-group select {
-  background: rgba(18, 22, 32, 0.8);
-  color: var(--text-strong);
-  border-color: rgba(120, 134, 200, 0.3);
-}
 
 .input-group.toggle {
   flex-direction: row;
@@ -372,8 +270,8 @@ body.theme-nightfall .input-group select {
   width: 48px;
   height: 24px;
   border-radius: 999px;
-  background: var(--accent-soft);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: var(--theme-accent-soft);
+  border: 1px solid var(--theme-border);
   appearance: none;
   position: relative;
   cursor: pointer;
@@ -388,13 +286,13 @@ body.theme-nightfall .input-group select {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(22, 26, 44, 0.3);
+  background: var(--theme-text-inverse);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.3);
   transition: transform 0.2s ease;
 }
 
 .input-group.toggle input[type="checkbox"]:checked {
-  background: var(--accent);
+  background: var(--theme-accent);
 }
 
 .input-group.toggle input[type="checkbox"]:checked::after {
@@ -411,13 +309,13 @@ body.theme-nightfall .input-group select {
   display: flex;
   justify-content: space-between;
   font-size: 0.9rem;
-  color: var(--text-muted);
+  color: var(--theme-text-secondary);
 }
 
 .session-meta dd {
   margin: 0;
   font-weight: 600;
-  color: var(--text-strong);
+  color: var(--theme-text-primary);
 }
 
 .panel-header {
@@ -430,7 +328,7 @@ body.theme-nightfall .input-group select {
 .panel-help {
   margin: 0 0 14px;
   font-size: 0.85rem;
-  color: var(--text-muted);
+  color: var(--theme-text-secondary);
 }
 
 .memory-list {
@@ -444,11 +342,11 @@ body.theme-nightfall .input-group select {
 }
 
 .memory-list li {
-  background: var(--surface-panel-strong);
+  background: var(--theme-panel-alt);
   border-radius: var(--radius-small);
   padding: 12px 14px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: none;
+  border: 1px solid var(--theme-border);
   font-size: 0.85rem;
 }
 
@@ -458,13 +356,13 @@ body.theme-nightfall .input-group select {
 }
 
 .chat-pane {
-  background: var(--surface-panel);
+  background: var(--theme-panel);
   border-radius: var(--radius-large);
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid var(--theme-border);
   display: flex;
   flex-direction: column;
   min-height: 0;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: var(--theme-shadow);
   overflow: hidden;
 }
 
@@ -484,7 +382,7 @@ body.theme-nightfall .input-group select {
   place-items: center;
   padding: 32px;
   text-align: center;
-  color: var(--text-muted);
+  color: var(--theme-text-secondary);
 }
 
 .chat-empty-card {
@@ -493,17 +391,16 @@ body.theme-nightfall .input-group select {
   gap: 14px;
   padding: 32px;
   border-radius: var(--radius-medium);
-  border: 1px dashed var(--stroke);
-  background: var(--surface-panel-strong);
-  background: color-mix(in srgb, var(--surface-panel-strong) 88%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 18px 44px rgba(18, 24, 46, 0.16);
+  border: 1px dashed var(--theme-border);
+  background: var(--theme-panel-alt);
+  box-shadow: var(--theme-shadow);
 }
 
 .chat-empty-card h3 {
   margin: 0;
   font-family: var(--font-display);
   font-size: 1.05rem;
-  color: var(--text-strong);
+  color: var(--theme-text-primary);
 }
 
 .chat-empty-card p {
@@ -528,33 +425,33 @@ body.theme-nightfall .input-group select {
   display: grid;
   place-items: center;
   font-size: 1.2rem;
-  background: rgba(255, 255, 255, 0.7);
-  color: var(--accent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 8px 18px rgba(35, 45, 75, 0.18);
+  background: var(--theme-panel-alt);
+  color: var(--theme-accent);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.15);
 }
 
 .chat-message.user .chat-avatar {
-  background: var(--surface-chat-user);
-  color: var(--text-inverse);
+  background: var(--theme-chat-user-bg);
+  color: var(--theme-chat-user-text);
 }
 
 .chat-bubble {
   max-width: min(640px, 82vw);
   padding: 16px 18px;
   border-radius: 22px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 18px 40px rgba(18, 25, 56, 0.18);
+  box-shadow: var(--theme-shadow);
   line-height: 1.6;
   font-size: 0.97rem;
 }
 
 .chat-message.assistant .chat-bubble {
-  background: var(--surface-chat-assistant);
-  color: var(--text-strong);
+  background: var(--theme-chat-assistant-bg);
+  color: var(--theme-chat-assistant-text);
 }
 
 .chat-message.user .chat-bubble {
-  background: var(--surface-chat-user);
-  color: var(--text-inverse);
+  background: var(--theme-chat-user-bg);
+  color: var(--theme-chat-user-text);
   border-bottom-right-radius: 8px;
 }
 
@@ -565,7 +462,7 @@ body.theme-nightfall .input-group select {
 .chat-meta {
   margin-top: 10px;
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--theme-text-secondary);
 }
 
 .chat-bubble p {
@@ -585,20 +482,20 @@ body.theme-nightfall .input-group select {
 .chat-bubble code {
   font-family: "Fira Code", "SFMono-Regular", Consolas, monospace;
   font-size: 0.9rem;
-  background: rgba(0, 0, 0, 0.08);
+  background: color-mix(in srgb, var(--theme-text-primary) 12%, transparent);
   padding: 2px 6px;
   border-radius: 6px;
 }
 
 .chat-bubble pre {
-  background: rgba(16, 22, 44, 0.85);
-  color: #f5f9ff;
+  background: color-mix(in srgb, var(--theme-chat-assistant-bg) 80%, var(--theme-text-primary) 20%);
+  color: var(--theme-text-inverse);
   border-radius: 14px;
   padding: 16px;
   overflow-x: auto;
   margin: 12px 0;
   font-size: 0.9rem;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 16px 42px rgba(12, 14, 30, 0.35);
+  box-shadow: 0 16px 42px rgba(15, 23, 42, 0.25);
 }
 
 .chat-bubble pre code {
@@ -611,8 +508,8 @@ body.theme-nightfall .input-group select {
   max-width: 100%;
   border-radius: 18px;
   margin: 12px 0;
-  box-shadow: 0 18px 38px rgba(20, 24, 40, 0.22);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.2);
+  border: 1px solid var(--theme-border);
 }
 
 .composer {
@@ -620,37 +517,25 @@ body.theme-nightfall .input-group select {
   flex-direction: column;
   gap: 12px;
   padding: 16px clamp(20px, 3vw, 32px) 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.6);
+  border-top: 1px solid var(--theme-border);
+  background: var(--theme-composer-bg);
   border-bottom-left-radius: var(--radius-large);
   border-bottom-right-radius: var(--radius-large);
-}
-
-body.theme-aurora .composer,
-body.theme-nightfall .composer {
-  background: rgba(12, 16, 28, 0.82);
 }
 
 .composer textarea {
   resize: none;
   min-height: 64px;
   border-radius: var(--radius-medium);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--theme-input-border);
   padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.7);
-  color: var(--text-strong);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-body.theme-aurora .composer textarea,
-body.theme-nightfall .composer textarea {
-  background: rgba(18, 22, 32, 0.84);
-  border-color: rgba(120, 134, 200, 0.3);
-  color: var(--text-strong);
+  background: var(--theme-input-bg);
+  color: var(--theme-input-text);
+  box-shadow: none;
 }
 
 .composer textarea:focus {
-  outline: 2px solid rgba(82, 116, 255, 0.6);
+  outline: 2px solid color-mix(in srgb, var(--theme-accent) 70%, transparent);
   outline-offset: 2px;
 }
 
@@ -660,7 +545,7 @@ body.theme-nightfall .composer textarea {
   justify-content: space-between;
   gap: 20px;
   font-size: 0.85rem;
-  color: var(--text-muted);
+  color: var(--theme-text-secondary);
 }
 
 .composer-actions {
@@ -673,37 +558,39 @@ body.theme-nightfall .composer textarea {
   border-radius: 999px;
   padding: 10px 24px;
   font-weight: 600;
-  background: linear-gradient(135deg, #5f80ff, #4a8dff);
-  color: #fff;
-  box-shadow: 0 10px 25px rgba(82, 116, 255, 0.35);
+  background: var(--theme-accent);
+  color: var(--theme-accent-text);
+  box-shadow: 0 10px 25px color-mix(in srgb, var(--theme-accent) 40%, transparent);
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .primary-button:disabled {
-  opacity: 0.6;
+  background: var(--theme-accent-disabled);
+  color: var(--theme-accent-text);
   cursor: progress;
   box-shadow: none;
 }
 
 .primary-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 16px 30px rgba(82, 116, 255, 0.4);
+  background: var(--theme-accent-hover);
+  box-shadow: 0 16px 30px color-mix(in srgb, var(--theme-accent) 45%, transparent);
 }
 
 .ghost-button {
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--theme-border);
   border-radius: 999px;
-  background: transparent;
-  color: var(--text-strong);
+  background: var(--theme-ghost-bg);
+  color: var(--theme-ghost-text);
   padding: 8px 16px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 .ghost-button:hover {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--theme-ghost-hover);
+  color: var(--theme-accent);
 }
 
 .toast {
@@ -714,10 +601,10 @@ body.theme-nightfall .composer textarea {
   max-width: min(360px, 90vw);
   padding: 14px 18px;
   border-radius: 16px;
-  background: rgba(24, 28, 52, 0.88);
-  color: #f4f6ff;
-  box-shadow: 0 18px 42px rgba(12, 16, 32, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: color-mix(in srgb, var(--theme-text-primary) 82%, transparent);
+  color: var(--theme-text-inverse);
+  box-shadow: var(--theme-shadow);
+  border: 1px solid var(--theme-border);
   font-size: 0.95rem;
   backdrop-filter: blur(18px);
 }
