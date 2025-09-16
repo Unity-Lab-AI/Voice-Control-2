@@ -20,9 +20,93 @@ const FALLBACK_VOICES = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
 
 const API_ENDPOINT = 'https://text.pollinations.ai/openai';
 const MODELS_ENDPOINT = 'https://text.pollinations.ai/models';
-const API_REFERRER = 'unity-chat.app';
+const API_REFERRER = 'www.unityailab.com';
 const LOCAL_MODELS_PATH = 'data/models.json';
 const THEME_MANIFEST_PATH = 'themes/manifest.json';
+
+const API_SEED_LENGTH = 8;
+let cryptoSeedWarningLogged = false;
+
+function sanitizeToken(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.includes('POLLINATIONS_TOKEN')) {
+    return '';
+  }
+  return trimmed;
+}
+
+function readMetaContent(name) {
+  if (typeof document === 'undefined') {
+    return '';
+  }
+  const meta = document.querySelector(`meta[name="${name}"]`);
+  return meta?.getAttribute('content')?.trim() || '';
+}
+
+function resolvePollinationsToken() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const directCandidates = [
+    window.POLLINATIONS_TOKEN,
+    window.__POLLINATIONS_TOKEN__,
+    window.__UNITY_CONFIG__?.pollinationsToken,
+    window.__ENV__?.POLLINATIONS_TOKEN
+  ];
+
+  for (const candidate of directCandidates) {
+    const sanitized = sanitizeToken(candidate);
+    if (sanitized) {
+      return sanitized;
+    }
+  }
+
+  if (typeof document !== 'undefined') {
+    const datasetToken = sanitizeToken(document.documentElement?.dataset?.pollinationsToken);
+    if (datasetToken) {
+      return datasetToken;
+    }
+
+    const metaToken = sanitizeToken(readMetaContent('pollinations-token'));
+    if (metaToken) {
+      return metaToken;
+    }
+  }
+
+  return '';
+}
+
+function generateSeed() {
+  const fallbackSeed = '23456789';
+
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    try {
+      const buffer = new Uint32Array(1);
+      crypto.getRandomValues(buffer);
+      const digits = buffer[0].toString().padStart(API_SEED_LENGTH, '0');
+      if (digits.length >= API_SEED_LENGTH) {
+        return digits.slice(-API_SEED_LENGTH);
+      }
+    } catch (error) {
+      if (!cryptoSeedWarningLogged) {
+        console.warn('Unable to generate cryptographic seed, falling back to Math.random()', error);
+        cryptoSeedWarningLogged = true;
+      }
+    }
+  }
+
+  const randomSeed = Math.floor(Math.random() * 10 ** API_SEED_LENGTH)
+    .toString()
+    .padStart(API_SEED_LENGTH, '0');
+
+  return randomSeed || fallbackSeed;
+}
+
+const API_TOKEN = resolvePollinationsToken();
 
 const LEGACY_THEME_MAP = {
   'theme-light': 'daylight',
@@ -108,21 +192,45 @@ const formatters = {
   }
 };
 
-function buildGatewayUrl(model) {
+function buildGatewayUrl(model, options = {}) {
   const url = new URL(API_ENDPOINT);
-  url.searchParams.set('referrer', API_REFERRER);
+
   if (model) {
     url.searchParams.set('model', model);
   }
+
+  if (API_REFERRER) {
+    url.searchParams.set('referrer', API_REFERRER);
+    url.searchParams.set('referer', API_REFERRER);
+  }
+
+  if (API_TOKEN) {
+    url.searchParams.set('token', API_TOKEN);
+  }
+
+  const seedOverride = typeof options.seed === 'string' ? options.seed.trim() : '';
+  const seedValue = seedOverride || generateSeed();
+  url.searchParams.set('seed', seedValue);
+
   return url.toString();
 }
 
 function buildModelsUrl(model) {
   const url = new URL(MODELS_ENDPOINT);
-  url.searchParams.set('referrer', API_REFERRER);
+
   if (model) {
     url.searchParams.set('model', model);
   }
+
+  if (API_REFERRER) {
+    url.searchParams.set('referrer', API_REFERRER);
+    url.searchParams.set('referer', API_REFERRER);
+  }
+
+  if (API_TOKEN) {
+    url.searchParams.set('token', API_TOKEN);
+  }
+
   return url.toString();
 }
 
@@ -278,13 +386,10 @@ function loadStoredState() {
       }
     }
 
-    const storedHistory = localStorage.getItem(STORAGE_KEYS.history);
-    if (storedHistory) {
-      const parsed = JSON.parse(storedHistory);
-      if (Array.isArray(parsed)) {
-        state.history = parsed;
-      }
+    if (localStorage.getItem(STORAGE_KEYS.history)) {
+      localStorage.removeItem(STORAGE_KEYS.history);
     }
+    state.history = [];
 
     const preferences = localStorage.getItem(STORAGE_KEYS.preferences);
     if (preferences) {
@@ -304,7 +409,7 @@ function persistState() {
   try {
     localStorage.setItem(STORAGE_KEYS.theme, state.selectedTheme);
     localStorage.setItem(STORAGE_KEYS.memories, JSON.stringify(state.memories));
-    localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(state.history));
+    localStorage.removeItem(STORAGE_KEYS.history);
     localStorage.setItem(
       STORAGE_KEYS.preferences,
       JSON.stringify({
@@ -716,18 +821,6 @@ function renderChat() {
   if (!elements.chatLog) return;
   elements.chatLog.innerHTML = '';
   if (!state.history.length) {
-    const placeholder = document.createElement('div');
-    placeholder.className = 'chat-empty';
-    placeholder.innerHTML = `
-      <div class="chat-empty-card">
-        <h3>Start a new idea</h3>
-        <p>
-          Use the composer below to brief Unity Chat. Ask for Pollinations imagery, code experiments, or product ideation and
-          the assistant will reply here.
-        </p>
-      </div>
-    `;
-    elements.chatLog.appendChild(placeholder);
     return;
   }
   state.history.forEach((message) => appendChatMessage(message));
