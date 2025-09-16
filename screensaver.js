@@ -195,12 +195,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const textModel = document.getElementById("model-select")?.value;
         const seed = generateSeed();
         try {
-            const response = await window.pollinationsFetch("https://text.pollinations.ai/openai", {
+            const modelName = (textModel || "unity").trim();
+            const endpoint = new URL("https://text.pollinations.ai/openai");
+            endpoint.searchParams.set("model", modelName);
+            const response = await window.pollinationsFetch(endpoint.toString(), {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Accept: "application/json" },
                 cache: "no-store",
                 body: JSON.stringify({
-                    model: textModel || "openai",
+                    model: modelName,
                     seed,
                     messages: [{ role: "user", content: metaPrompt }]
                 })
