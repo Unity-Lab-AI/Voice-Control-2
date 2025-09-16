@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unity Voice Call Assistant</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="app__header">
+      <h1>Unity Voice Call Assistant</h1>
+      <p class="app__tagline">
+        Start a phone call where Unity chats with you using Pollinations text and Twilio voice.
+      </p>
+    </header>
+
+    <section class="card">
+      <h2>Start a Voice Chat</h2>
+      <form id="call-form" class="form">
+        <label class="form__label" for="phoneNumber">Phone number (E.164 format)</label>
+        <input class="form__input" id="phoneNumber" name="phoneNumber" type="tel" placeholder="+15551234567" required />
+
+        <label class="form__label" for="initialPrompt">What should Unity talk about?</label>
+        <textarea class="form__textarea" id="initialPrompt" name="initialPrompt" rows="3" placeholder="Ask Unity to call me with an update about our project."></textarea>
+
+        <label class="form__label" for="voice">Select a Pollinations voice</label>
+        <select class="form__select" id="voice" name="voice">
+          <option value="nova">Nova (default)</option>
+          <option value="alloy">Alloy</option>
+          <option value="fable">Fable</option>
+          <option value="onyx">Onyx</option>
+          <option value="shimmer">Shimmer</option>
+          <option value="echo">Echo</option>
+        </select>
+
+        <button class="form__submit" type="submit">Call My Phone</button>
+      </form>
+
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="card">
+      <h2>How it works</h2>
+      <ol class="steps">
+        <li>Fill in your phone number and (optionally) a topic.</li>
+        <li>Answer the incoming call from your Twilio number.</li>
+        <li>Unity speaks using Pollinations text-to-speech and waits for your reply.</li>
+        <li>Your speech is transcribed, sent to the Unity text API, and the cycle repeats.</li>
+      </ol>
+      <p class="hint">
+        Keep the call open and speak clearly. Each response is limited to a short, natural sentence so the Pollinations TTS link stays reliable.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Call Activity</h2>
+      <ul id="log" class="log" aria-live="polite" aria-label="Call activity log"></ul>
+    </section>
+  </main>
+
+  <script src="client.js" type="module"></script>
+</body>
+</html>
