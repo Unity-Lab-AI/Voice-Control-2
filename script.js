@@ -21,6 +21,53 @@ const FALLBACK_VOICES = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
 const API_ENDPOINT = 'https://text.pollinations.ai/openai';
 const MODELS_ENDPOINT = 'https://text.pollinations.ai/models';
 const API_REFERRER = 'unity-chat.app';
+const LOCAL_MODELS_PATH = 'data/models.json';
+const THEME_MANIFEST_PATH = 'themes/manifest.json';
+
+const LEGACY_THEME_MAP = {
+  'theme-light': 'daylight',
+  'theme-dark': 'aurora',
+  'theme-amoled': 'nightfall'
+};
+
+const DEFAULT_THEMES = [
+  {
+    id: 'daylight',
+    label: 'Daylight',
+    className: 'theme-daylight',
+    description: 'Airy daylight interface with luminous glass surfaces.'
+  },
+  {
+    id: 'aurora',
+    label: 'Aurora Dark',
+    className: 'theme-aurora',
+    description: 'Nocturnal gradient with neon aurora accents.'
+  },
+  {
+    id: 'nightfall',
+    label: 'Nightfall AMOLED',
+    className: 'theme-nightfall',
+    description: 'OLED-friendly midnight palette with vibrant highlights.'
+  },
+  {
+    id: 'ocean',
+    label: 'Ocean Breeze',
+    className: 'theme-ocean',
+    description: 'Atlantic teal workspace with crisp coastal glow.'
+  },
+  {
+    id: 'honeycomb',
+    label: 'Honeycomb Glow',
+    className: 'theme-honeycomb',
+    description: 'Warm amber glass and honeycomb lighting.'
+  },
+  {
+    id: 'serenity',
+    label: 'Serenity Bloom',
+    className: 'theme-serenity',
+    description: 'Lavender sunrise palette for calm focus.'
+  }
+];
 
 const state = {
   aiInstruct: '',
@@ -28,11 +75,12 @@ const state = {
   memories: [],
   selectedModel: FALLBACK_MODELS[0].id,
   selectedVoice: FALLBACK_VOICES[0],
-  selectedTheme: 'theme-light',
+  selectedTheme: DEFAULT_THEMES[0].id,
   memoryEnabled: true,
   isSending: false,
   availableModels: [],
-  availableVoices: []
+  availableVoices: [],
+  availableThemes: DEFAULT_THEMES.map((theme) => ({ ...theme }))
 };
 
 const elements = {};
@@ -76,6 +124,89 @@ function buildModelsUrl(model) {
     url.searchParams.set('model', model);
   }
   return url.toString();
+}
+
+function resolveThemeId(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) {
+    return '';
+  }
+  return LEGACY_THEME_MAP[normalized] || normalized;
+}
+
+function findThemeById(id, collection = state.availableThemes) {
+  if (!id) return null;
+  return collection.find((theme) => theme.id === id) || null;
+}
+
+function createThemeEntry(input) {
+  if (!input) return null;
+
+  if (typeof input === 'string') {
+    const id = resolveThemeId(input);
+    if (!id) return null;
+    const fallback = findThemeById(id, DEFAULT_THEMES);
+    return fallback ? { ...fallback } : { id, label: id, className: `theme-${id}` };
+  }
+
+  if (typeof input !== 'object') return null;
+
+  const id = resolveThemeId(input.id || input.slug || input.value || input.className);
+  if (!id) return null;
+
+  const labelSource = input.label || input.name || input.title || id;
+  const label = String(labelSource).trim() || id;
+  const className = String(input.className || `theme-${id}`).trim();
+  const description = String(input.description || input.summary || '').trim();
+
+  return {
+    id,
+    label,
+    className,
+    description
+  };
+}
+
+function normalizeThemePayload(payload) {
+  const seen = new Set();
+  const themes = [];
+
+  const addTheme = (entry) => {
+    if (!entry || !entry.id || seen.has(entry.id)) return;
+    seen.add(entry.id);
+    const fallback = findThemeById(entry.id, DEFAULT_THEMES);
+    themes.push({ ...fallback, ...entry });
+  };
+
+  const processValue = (value) => {
+    if (!value) return;
+    if (Array.isArray(value)) {
+      value.forEach(processValue);
+    } else if (typeof value === 'object' && Array.isArray(value.themes)) {
+      processValue(value.themes);
+    } else {
+      addTheme(createThemeEntry(value));
+    }
+  };
+
+  processValue(payload);
+  DEFAULT_THEMES.forEach(addTheme);
+
+  return themes;
+}
+
+async function fetchThemes() {
+  try {
+    const response = await fetch(THEME_MANIFEST_PATH, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Status ${response.status}`);
+    }
+    const data = await response.json();
+    return normalizeThemePayload(data);
+  } catch (error) {
+    console.warn('Falling back to bundled themes', error.message || error);
+    return DEFAULT_THEMES.map((theme) => ({ ...theme }));
+  }
 }
 
 function bindElements() {
@@ -133,7 +264,10 @@ function loadStoredState() {
   try {
     const storedTheme = localStorage.getItem(STORAGE_KEYS.theme);
     if (storedTheme) {
-      state.selectedTheme = storedTheme;
+      const resolvedTheme = resolveThemeId(storedTheme);
+      if (resolvedTheme) {
+        state.selectedTheme = resolvedTheme;
+      }
     }
 
     const storedMemories = localStorage.getItem(STORAGE_KEYS.memories);
@@ -184,14 +318,33 @@ function persistState() {
   }
 }
 
-function applyTheme(themeClass) {
-  const themes = ['theme-light', 'theme-dark', 'theme-amoled'];
-  themes.forEach((cls) => document.body.classList.remove(cls));
-  document.body.classList.add(themeClass);
-  state.selectedTheme = themeClass;
-  elements.themeBadge.textContent =
-    themeClass === 'theme-dark' ? 'Aurora Dark' : themeClass === 'theme-amoled' ? 'Nightfall AMOLED' : 'Daylight';
+function applyTheme(themeId) {
+  const availableThemes = state.availableThemes.length ? state.availableThemes : DEFAULT_THEMES;
+  const targetTheme = findThemeById(themeId, availableThemes) || availableThemes[0] || DEFAULT_THEMES[0];
+
+  const classes = new Set([
+    ...availableThemes.map((theme) => theme.className),
+    ...DEFAULT_THEMES.map((theme) => theme.className)
+  ]);
+
+  classes.forEach((cls) => {
+    if (cls) {
+      document.body.classList.remove(cls);
+    }
+  });
+
+  if (targetTheme?.className) {
+    document.body.classList.add(targetTheme.className);
+  }
+
+  state.selectedTheme = targetTheme.id;
+
+  if (elements.themeSelect && elements.themeSelect.options.length) {
+    elements.themeSelect.value = targetTheme.id;
+  }
+
   persistState();
+  updateSessionSnapshot();
 }
 
 function setSelectPlaceholder(select, text) {
@@ -319,7 +472,36 @@ function normalizeModelPayload(payload) {
   return { models, voices: voiceList };
 }
 
+async function loadLocalModelCatalog() {
+  try {
+    const response = await fetch(LOCAL_MODELS_PATH, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Status ${response.status}`);
+    }
+    const data = await response.json();
+    const payload = Array.isArray(data?.models) ? data.models : data;
+    const normalized = normalizeModelPayload(payload);
+
+    if (normalized && Array.isArray(data?.voices)) {
+      const voiceSet = new Set([...(normalized.voices || []), ...data.voices]);
+      normalized.voices = Array.from(voiceSet).sort((a, b) =>
+        a.localeCompare(b, undefined, { sensitivity: 'base' })
+      );
+    }
+
+    return normalized;
+  } catch (error) {
+    console.warn('Unable to load bundled model catalog', error.message || error);
+    return null;
+  }
+}
+
 async function fetchModels() {
+  const localCatalog = await loadLocalModelCatalog();
+  if (localCatalog?.models?.length) {
+    return localCatalog;
+  }
+
   try {
     const response = await fetch(buildModelsUrl(state.selectedModel), { cache: 'no-store' });
     if (!response.ok) {
@@ -345,6 +527,12 @@ function updateSessionSnapshot() {
   if (elements.voiceBadge) {
     elements.voiceBadge.textContent = state.selectedVoice;
     elements.voiceBadge.title = state.selectedVoice;
+  }
+  if (elements.themeBadge) {
+    const theme = findThemeById(state.selectedTheme) || findThemeById(state.selectedTheme, DEFAULT_THEMES);
+    const themeLabel = theme?.label || state.selectedTheme;
+    elements.themeBadge.textContent = themeLabel;
+    elements.themeBadge.title = theme?.description || themeLabel;
   }
 }
 
@@ -458,6 +646,10 @@ function parseStructuredContent(content) {
 
 function appendChatMessage(message) {
   if (!elements.chatLog) return;
+  const placeholder = elements.chatLog.querySelector('.chat-empty');
+  if (placeholder) {
+    placeholder.remove();
+  }
   const row = document.createElement('div');
   row.className = `chat-message ${message.role}`;
 
@@ -523,19 +715,22 @@ function appendChatMessage(message) {
 function renderChat() {
   if (!elements.chatLog) return;
   elements.chatLog.innerHTML = '';
+  if (!state.history.length) {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'chat-empty';
+    placeholder.innerHTML = `
+      <div class="chat-empty-card">
+        <h3>Start a new idea</h3>
+        <p>
+          Use the composer below to brief Unity Chat. Ask for Pollinations imagery, code experiments, or product ideation and
+          the assistant will reply here.
+        </p>
+      </div>
+    `;
+    elements.chatLog.appendChild(placeholder);
+    return;
+  }
   state.history.forEach((message) => appendChatMessage(message));
-}
-
-function addSystemWelcomeIfNeeded() {
-  if (state.history.length) return;
-  const welcome = {
-    role: 'assistant',
-    timestamp: new Date().toISOString(),
-    content:
-      'Welcome to Unity Chat! I am ready to collaborate on ideas, craft code snippets, and fetch Pollinations imagery. ' +
-      'Tune the model, voice, and theme from the control hub whenever you are ready to begin.'
-  };
-  state.history.push(welcome);
 }
 
 function updateCharCounter() {
@@ -551,7 +746,13 @@ function autoResizeTextarea() {
 }
 
 function handleThemeChange(event) {
-  applyTheme(event.target.value);
+  const themeId = event.target.value;
+  if (!themeId) return;
+  applyTheme(themeId);
+  const theme = findThemeById(themeId) || findThemeById(themeId, DEFAULT_THEMES);
+  if (theme) {
+    showToast(`Theme set to ${theme.label}.`, 'info', 2200);
+  }
 }
 
 function handleModelChange(event) {
@@ -581,14 +782,14 @@ function clearMemories() {
 
 function resetChat() {
   state.history = [];
-  addSystemWelcomeIfNeeded();
   renderChat();
   persistState();
   showToast('Conversation reset.', 'info');
 }
 
 function buildSystemPrompt() {
-  const themeLabel = elements.themeSelect?.selectedOptions?.[0]?.textContent || 'Daylight';
+  const theme = findThemeById(state.selectedTheme) || findThemeById(state.selectedTheme, DEFAULT_THEMES);
+  const themeLabel = theme?.label || 'Daylight';
   const memoryBlock = state.memories.slice(-10).map((memory) => `[memory]${memory}[/memory]`).join('\n');
   const memoryCopy = state.memories.slice(-10).map((memory, index) => `${index + 1}. ${memory}`).join('\n');
 
@@ -723,10 +924,12 @@ async function initialize() {
   configureLibraries();
   initClock();
   loadStoredState();
-  applyTheme(state.selectedTheme);
 
   setSelectPlaceholder(elements.modelSelect, 'Loading models…');
   setSelectPlaceholder(elements.voiceSelect, 'Loading voices…');
+  setSelectPlaceholder(elements.themeSelect, 'Loading themes…');
+
+  applyTheme(state.selectedTheme);
 
   const preferencesLoaded = state.memoryEnabled;
   elements.memoryToggle.checked = preferencesLoaded;
@@ -744,6 +947,14 @@ async function initialize() {
     showToast('Could not load ai-instruct.txt, using a fallback prompt.', 'error');
   }
 
+  const themes = await fetchThemes();
+  state.availableThemes = themes.length ? themes : DEFAULT_THEMES.map((theme) => ({ ...theme }));
+  if (!findThemeById(state.selectedTheme, state.availableThemes)) {
+    state.selectedTheme = state.availableThemes[0]?.id || DEFAULT_THEMES[0].id;
+  }
+  populateSelect(elements.themeSelect, state.availableThemes, state.selectedTheme);
+  applyTheme(state.selectedTheme);
+
   const { models, voices } = await fetchModels();
   const textModels = models.filter((model) => model.supportsText !== false);
   state.availableModels = textModels.length ? textModels : models;
@@ -759,11 +970,9 @@ async function initialize() {
 
   populateSelect(elements.modelSelect, state.availableModels, state.selectedModel, { includeMeta: true });
   populateSelect(elements.voiceSelect, state.availableVoices, state.selectedVoice);
-  elements.themeSelect.value = state.selectedTheme;
 
   elements.memoryToggle.checked = state.memoryEnabled;
 
-  addSystemWelcomeIfNeeded();
   renderChat();
   renderMemories();
   updateSessionSnapshot();
