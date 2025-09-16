@@ -12,7 +12,6 @@ if (!fetchImpl) {
 }
 
 const PORT = process.env.PORT || 4000;
-const PUBLIC_SERVER_URL = process.env.PUBLIC_SERVER_URL;
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
@@ -24,11 +23,8 @@ const hasTwilioCredentials =
 if (!hasTwilioCredentials) {
   console.warn('[WARN] Twilio credentials are not fully configured. API routes will return errors.');
 }
-if (!PUBLIC_SERVER_URL) {
-  console.warn('[WARN] PUBLIC_SERVER_URL is not set. Twilio callbacks will fail without a public URL.');
-}
-
 const app = express();
+app.set('trust proxy', true);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -146,15 +142,15 @@ function buildVoiceResponse(session, twiml, promptMessage, gatherPrompt) {
   return twiml;
 }
 
-async function startPhoneCall(session) {
+async function startPhoneCall(session, baseUrl) {
   if (!client) {
     throw new Error('Twilio client is not configured.');
   }
-  if (!PUBLIC_SERVER_URL) {
-    throw new Error('PUBLIC_SERVER_URL is not configured.');
+  if (!baseUrl) {
+    throw new Error('Unable to determine a public server URL from the request.');
   }
 
-  const voiceUrl = new URL('/voice-response', PUBLIC_SERVER_URL);
+  const voiceUrl = new URL('/voice-response', baseUrl);
   voiceUrl.searchParams.set('sessionId', session.id);
 
   return client.calls.create({
@@ -163,6 +159,15 @@ async function startPhoneCall(session) {
     from: TWILIO_PHONE_NUMBER,
     method: 'POST'
   });
+}
+
+function resolvePublicBaseUrl(req) {
+  const forwardedProto = req.headers['x-forwarded-proto'];
+  const forwardedHost = req.headers['x-forwarded-host'];
+  const protocol = forwardedProto ? forwardedProto.split(',')[0] : req.protocol;
+  const host = forwardedHost ? forwardedHost.split(',')[0] : req.get('host');
+  if (!protocol || !host) return null;
+  return `${protocol}://${host}`;
 }
 
 app.post('/api/start-call', async (req, res) => {
@@ -174,8 +179,12 @@ app.post('/api/start-call', async (req, res) => {
     if (!client) {
       return res.status(500).json({ error: 'Twilio credentials are missing on the server.' });
     }
-    if (!PUBLIC_SERVER_URL) {
-      return res.status(500).json({ error: 'PUBLIC_SERVER_URL is not configured on the server.' });
+
+    const baseUrl = resolvePublicBaseUrl(req);
+    if (!baseUrl) {
+      return res.status(500).json({
+        error: 'Unable to infer the public URL from the request. Access the app via a public HTTPS address before starting a call.'
+      });
     }
 
     const session = createSession(phoneNumber.trim(), voice || DEFAULT_VOICE);
@@ -187,7 +196,7 @@ app.post('/api/start-call', async (req, res) => {
       await fetchPollinationsResponse(session, 'Greet the caller briefly and ask how you can help.');
     }
 
-    await startPhoneCall(session);
+    await startPhoneCall(session, baseUrl);
 
     res.json({
       sessionId: session.id,

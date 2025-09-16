@@ -29,7 +29,6 @@ A lightweight Node + Twilio companion service that lets Unity call a phone numbe
    ```
    Required variables:
    - `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`
-   - `PUBLIC_SERVER_URL` – The **public** HTTPS URL that Twilio will call back (e.g. your ngrok tunnel).
    - Optional: `POLLINATIONS_VOICE` to choose a different Pollinations voice preset.
 3. Start the server:
    ```bash
@@ -40,9 +39,9 @@ A lightweight Node + Twilio companion service that lets Unity call a phone numbe
    # Example using ngrok (server must already be running on PORT)
    ngrok http 4000
    ```
-5. Update `PUBLIC_SERVER_URL` in your `.env` with the HTTPS forwarding address printed by ngrok and restart the server if needed.
-
 Visit [http://localhost:4000](http://localhost:4000) to load the dashboard, enter a phone number, and press **Call My Phone**. Answer the incoming call from your Twilio number to begin the voice chat.
+
+> ℹ️ The server automatically infers its public URL from the incoming browser request when you press **Call My Phone**. Ensure you access the dashboard through the same public HTTPS address (for example, the ngrok URL) so Twilio receives a reachable callback URL.
 
 ## Twilio configuration tips
 
